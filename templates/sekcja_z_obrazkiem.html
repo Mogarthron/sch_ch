@@ -1,0 +1,30 @@
+{% macro sekcja_z_obrazkiem(naglowek, folder, nazwa_pliku, nr_zlecenia) %}
+<h3>{{ naglowek }}: {{ nazwa_pliku }}</h3>
+<div class="row mb-4">
+  <div class="col-5">
+    <img
+      src="{{ url_for('static', filename=folder + '/' + nazwa_pliku + '.jpeg') }}"
+      alt="{{ nazwa_pliku }}"
+      width="300"
+      height="300"
+    />
+  </div>
+  <div class="col-7 tabela-sekcja" data-sekcja="{{ folder }}" data-nr_zlecenia="{{ nr_zlecenia }}">
+    <table class="table" id="tabela_{{ folder }}">
+      <tbody></tbody>
+    </table>
+
+    <button type="button" class="btn btn-success" onclick="dodajWiersz(this)">
+      + Dodaj wiersz
+    </button>
+
+    <button
+      type="button"
+      class="btn btn-primary"
+      onclick="zatwierdzTabele(this)"
+    >
+      Zatwierdź tabelę
+    </button>
+  </div>
+</div>
+{% endmacro %}

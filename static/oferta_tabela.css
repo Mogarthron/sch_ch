@@ -1,0 +1,28 @@
+.tabela-sekcja table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .tabela-sekcja th:nth-child(1),
+  .tabela-sekcja td:nth-child(1) {
+    width: 60%;
+  }
+
+  .tabela-sekcja th:nth-child(2),
+  .tabela-sekcja td:nth-child(2) {
+    width: 20%;
+    text-align: center; 
+    vertical-align: middle;
+  }
+
+  .tabela-sekcja th:nth-child(3),
+  .tabela-sekcja td:nth-child(3) {
+    width: 20%;
+    text-align: end; 
+    vertical-align: middle;
+  }
+
+  .tabela-sekcja th:nth-child(4),
+  .tabela-sekcja td:nth-child(4) {
+    width: auto;
+  }

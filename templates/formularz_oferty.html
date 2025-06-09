@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Formularz wyboru schodów</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-light">
+     {% include "nawigacja.html" %}
+    <div class="container">
+      <h2 class="mb-4">Konfigurator oferty</h2>
+      <form method="POST">
+        <div class="row mb-3">
+          <div class="col">
+            <!-- Dane klienta -->
+            <div class="row mb-3">
+              <div class="col-md-3">
+                <label class="form-label">Zlecenie nr</label>
+                <input type="text" class="form-control" name="nr_zlecenia" />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Imię i nazwisko</label>
+                <input type="text" class="form-control" name="imie_nazwisko" />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Data Zlecenia</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  name="data_zlecenia"
+                />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Termin realizacji</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  name="termin_realizacji"
+                />
+              </div>
+        
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Adres inwestycji</label>
+              <input type="text" class="form-control" name="adres_inwestycji" />
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Telefon</label>
+                <input type="text" class="form-control" name="kontakt_telefon" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input type="text" class="form-control" name="kontakt_email" />
+              </div>
+              
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Dane do faktury</label>
+              <textarea
+                class="form-control"
+                rows="2"
+                name="dane_faktura"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col">
+            <div class="col">
+            <!-- Typ klienta -->
+            <h4 class="mt-4">Rodzaj klienta</h4>
+            <div class="form-check form-check-inline">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="typ_klienta"
+                value="osoba fizyczna"
+              />
+              <label class="form-check-label">Osoba fizyczna</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="typ_klienta"
+                value="firma"
+              />
+              <label class="form-check-label">Firma</label>
+            </div>
+          </div>
+        </div>
+        <hr class="my-4" />
+        <div class="row mb-3">
+          <div class="col">
+            <!-- Typ schodów -->
+
+            <label for="typy_schodow" class="form-label">Typ schodów</label>
+            <select
+              class="form-select"
+              id="typy_schodow"
+              name="typy_schodow"
+              required
+            >
+              <option value="">Wybierz...</option>
+              {% for option in typy_schodow %}
+              <option value="{{ option }}">{{ option }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col">
+            <!-- Materiał -->
+
+            <label for="material" class="form-label">Materiał</label>
+            <select class="form-select" id="material" name="material" required>
+              <option value="">Wybierz...</option>
+              <option value="dab">Dąb</option>
+              <option value="dab_sekaty">Dąb sękaty</option>
+              <option value="jesion">Jesion</option>
+              <option value="inne">Inny</option>
+            </select>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col">
+            <!-- Wykończenie ścian -->
+
+            <label for="wykonczenie_schodow" class="form-label"
+              >Wykończenie ścian przy schodach</label
+            >
+            <select
+              class="form-select"
+              id="wykonczenie_schodow"
+              name="wykonczenie_schodow"
+              required
+            >
+              <option value="">Wybierz...</option>
+              {% for option in wykonczenie_schodow %}
+              <option value="{{ option }}">{{ option }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col">
+            <label for="kolor_wykonczenia_schodow" class="form-label"
+              >Kolor wykończenia</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="kolor_wykonczenia_schodow"
+              name="kolor_wykonczenia_schodow"
+            />
+          </div>       
+        </div>
+
+        <!-- Balustrada -->
+        <div class="row mb-3">
+          <div class="col">
+            <label for="typ_balustrady" class="form-label">Typ balustrady</label>
+            <select
+              class="form-select"
+              id="typ_balustrady"
+              name="typ_balustrady"
+            >
+              <option value="">Wybierz...</option>
+              {% for option in typ_balustrady %}
+              <option value="{{ option }}">{{ option }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col">
+            <label for="obrobka_stropu" class="form-label">Obróbka stropu</label>
+            <select
+              class="form-select"
+              id="obrobka_stropu"
+              name="obrobka_stropu"
+            >
+              <option value="">Wybierz...</option>
+              
+              {% for option in obrobka_stropu %}
+              <option value="{{ option }}">{{ option }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col">
+            <label for="polaczenie_z_posadzka" class="form-label">Połącznie z posadzką</label>
+            <select
+              class="form-select"
+              id="polaczenie_z_posadzka"
+              name="polaczenie_z_posadzka"
+            >
+              <option value="">Wybierz...</option>
+              
+              {% for option in polaczenie_z_posadzka %}
+              <option value="{{ option }}">{{ option }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Przycisk wysyłający -->
+        <button type="submit" class="btn btn-primary">Wyślij</button>
+      </form>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,59 @@
+{% extends "layout.html" %} {% block content %} {% import
+"sekcja_z_obrazkiem.html" as makro %}
+<link rel="stylesheet" href="{{ url_for('static', filename='oferta_tabela.css') }}">
+
+<h2 class="text-start">
+  <strong>Oferta na wykonanie oraz montaż schodów</strong>
+</h2>
+<div class="row">
+  <div class="col" id="nrZlecenia"><strong>Numer Zlecenia: {{dane["nr_zlecenia"]}}</strong></div>
+  <div class="col">
+    <img
+      src="{{ url_for('static', filename='schody-chudzinski-logo.png') }}"
+      alt="LOGO"
+    />
+  </div>
+  <div class="col">
+    <p class="d-flex flex-wrap">
+      <span class="me-1">Data wystawienia:</span>
+      <span>2025-05-07</span>
+    </p>
+    <p class="d-flex flex-wrap">
+      <span class="me-1">Termin realizacji:</span>
+      <span>{{dane['termin_realizacji']}}</span>
+    </p>
+  </div>
+</div>
+
+<div class="row">
+  <p>Oferta przygotowana dla:</p>
+  <p>P. {{dane['imie_nazwisko']}}, {{dane['adres_inwestycji']}}</p>
+  <p>email: {{dane['kontakt_email']}}</p>
+</div>
+<div class="row text-center">
+  <p>
+    Oferta jest ważna przez 7 dni od daty wystawienia. W czasie tych 7 dni
+    termin realizacji może ulec zmianie.<br />W przypadku pytań prosimy o
+    kontakt z naszym biurem obsługi klienta pod numerem telefonu 123-456-789 lub
+    adresem e-mail
+  </p>
+</div>
+
+{% for key in dane %}
+  {% if key == "typy_schodow" %}
+    {{ makro.sekcja_z_obrazkiem("Typ", "typy_schodow", dane["typy_schodow"], dane["nr_zlecenia"]) }}
+  {% elif key == "wykonczenie_schodow" %}
+    {{ makro.sekcja_z_obrazkiem("Wykończenie schodów", "wykonczenie_schodow", dane["wykonczenie_schodow"], dane["nr_zlecenia"]) }}
+  {% elif key == "typ_balustrady" %}
+    {{ makro.sekcja_z_obrazkiem("Balustrada", "typ_balustrady", dane["typ_balustrady"], dane["nr_zlecenia"]) }}
+  {% elif key == "obrobka_stropu" %}
+    {{ makro.sekcja_z_obrazkiem("Obróbka stropu", "obrobka_stropu", dane["obrobka_stropu"], dane["nr_zlecenia"]) }}
+  {% elif key == "polaczenie_z_posadzka" %}
+    {{ makro.sekcja_z_obrazkiem("Połączenie z posadzką", "polaczenie_z_posadzka", dane["polaczenie_z_posadzka"], dane["nr_zlecenia"]) }}
+  {% endif %}
+{% endfor %}
+
+  <script src="{{ url_for('static', filename='oferta_tabela.js') }}"></script>
+
+</div>
+{% endblock %}

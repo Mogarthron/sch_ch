@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row mb-3">
+<h3>Dane oferty</h3>
+<table class="table">
+    <tbody>
+{% for wiersz in oferta_naglowek %}
+<tr>
+<td>{{wiersz}}</td>
+<td>
+        {{oferta_naglowek[wiersz]}}
+    </td>
+</tr>   
+  
+{% endfor %}
+    </tbody>
+
+</table>
+</div>
+<div class="row mb-3">
+    <h3>Szczegóły</h3>
+    <table>
+        <tbody>
+            {% for wiersz in wiersze_oferty %}
+            <tr data-id="{{ wiersz.ofsid }}">
+                <td>{{ wiersz.sekcja }}</td>
+                <td class="opis">{{ wiersz.opis }}</td>
+                <td class="ilosc">{{ wiersz.ilosc }}</td>
+                <td class="cena">{{ wiersz.cena }}</td>
+                <td><button type="button" class="btn btn-warning edytujWiersz">Edytuj</button></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="{{ url_for('static', filename='szczegoly_oferty.js') }}"></script>
+
+
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "layout.html" %} {% block content %}
+<div class="row">
+  <div class="col-3">
+    <img
+      src="{{ url_for('static', filename='schody-chudzinski-logo.png') }}"
+      alt="LOGO"
+    />
+  </div>
+  <div class="col text-start">
+    <p>Data wystawienia:</p>
+    <p>Termin realizacji:</p>
+    <p>Imię i nazwisko:</p>
+  </div>
+</div>
+<div class="row">
+  <div class="col">
+    <p>Adres inwestycji</p>
+  </div>
+  <div class="col">
+    <form action="" method="post">
+      <div class="form-check form-check-inline">
+        <input
+          class="form-check-input"
+          type="radio"
+          id="osoba_fizyczna"
+          value="osoba_fizyczna"
+        />
+        <label class="form-check-label" for="osoba_fizyczna"
+          >Osoba fizyczna</label
+        >
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" id="firma" value="firma" />
+        <label class="form-check-label" for="firma">Firma</label>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

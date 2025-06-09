@@ -1,0 +1,76 @@
+{% extends "layout.html" %}
+{% block content %}
+  <h2>Podsumowanie ofert</h2>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Nr zlecenia</th>
+        <th>Adres inwestycji</th>
+        <th>Data zlecenia</th>
+        <th>Status</th>
+        <th>Data wysłania</th>
+        <th>Data realizacji</th>
+        <th>Suma pozycji [zł]</th>
+        <th></th>
+
+      </tr>
+    </thead>
+    <tbody>
+      {% for oferta in oferty %}
+      <tr>
+        <td>{{ oferta.nr_zlecenia }}</td>
+        <td>{{ oferta.adres_inwestycji }}</td>
+        <td>{{ oferta.data_zlecenia }}</td>     
+        {% if oferta.status_zlecenia == "Wprowadzone" %}   
+        <td>{{ oferta.status_zlecenia }} dni {{oferta.dni_od_zlecenia}} temu</td>
+        {% else %}
+        <td>{{ oferta.status_zlecenia }}</td>
+        {% endif %}
+        {% if oferta.data_wyslania == None%}
+        <td><button type="button" class="btn btn-warning wyslij" data-nr="{{ oferta.nr_zlecenia }}">Wyślij</button></td>
+        {% else %}
+        <td>{{ oferta.data_wyslania }}</td>
+        {% endif %}
+        <td>{{ oferta.termin_realizacji }}</td>
+        <td>{{ "%.2f"|format(oferta.suma or 0) }} zł</td>
+        <td>
+          <form action="/szczegoly_oferty/{{oferta.nr_zlecenia}}" method="post">
+            <input type="submit" class="btn btn-primary" value="Szczegóły">
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+<script>
+document.querySelectorAll(".wyslij").forEach(button => {
+  button.addEventListener("click", function () {
+    const nrZlecenia = this.dataset.nr;
+    const td = this.closest("td");
+
+    fetch("/wyslano_oferte", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ nr_zlecenia: nrZlecenia })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        td.textContent = data.data_wyslania;  // ← nowa data zamiast przycisku
+      } else {
+        alert("Błąd: " + data.error);
+      }
+    });
+  });
+});
+</script>
+
+
+
+
+{% endblock %}
+
+
