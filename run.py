@@ -1,7 +1,8 @@
 from flask import Flask, request, render_template, redirect, url_for, jsonify
+from werkzeug.utils import secure_filename
 from sqlalchemy import create_engine, func, cast, Float, Integer
 from sqlalchemy.orm import sessionmaker
-from models import Base, Oferta, Oferta_Szczegoly
+from models import Base, Oferta, Oferta_Szczegoly, Kategorie_Wyceny
 
 from datetime import datetime as dt, timedelta 
 
@@ -9,10 +10,109 @@ import os
 
 app = Flask(__name__)
 
+UPLOAD_FOLDER = os.path.join("static", "zdjecia")
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+
 engine = create_engine('sqlite:///baza.db')
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
+
+
+@app.route("/pozycje_wyceny", methods=["GET", "POST"])
+def pozycje_wyceny():
+
+    return render_template("pozycje_wyceny.html")
+
+
+@app.route("/kategorie_wyceny", methods=["GET", "POST"])
+def kategorie_wyceny():
+
+    kategorie = session.query(Kategorie_Wyceny).all()
+
+    return render_template("kategorie_wyceny.html", kategorie=kategorie)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route("/dodaj_kategorie_wyceny", methods=["POST"])
+def dodaj_kategorie_wyceny():
+    nazwa_kategorii = request.form.get("nazwa_kategorii")
+    pod_kategoria = request.form.get("nazwa_podkategorii")
+    opis_kategorii = request.form.get("opis_kategorii")
+    plik = request.files.get("zdjecie")
+
+    zdjecie_url = None
+    if plik and plik.filename:
+        filename = secure_filename(plik.filename)
+        filepath = os.path.join("static", "zdjecia", filename)
+        plik.save(filepath)
+        zdjecie_url = f"/static/zdjecia/{filename}"
+
+    nowa_kategoria = Kategorie_Wyceny(
+        nazwa_kategorii=nazwa_kategorii,
+        pod_kategoria=pod_kategoria,
+        opis_kategorii=opis_kategorii,
+        zdjecie_url=zdjecie_url
+    )
+
+    try:
+        session.add(nowa_kategoria)
+        session.commit()
+        return redirect(url_for("dodaj_kategorie_wyceny"))
+    except Exception as e:
+        session.rollback()
+        return jsonify(success=False, error=str(e)), 500
+
+@app.route("/pobierz_nazwy_kategorii", methods=["GET"])
+def pobierz_nazwy_kategorii():
+    wyniki = session.query(Kategorie_Wyceny.nazwa_kategorii).distinct().all() #type: ignore
+    unikalne = [r[0] for r in wyniki]
+    return jsonify(unikalne)
+
+@app.route("/edytuj_kategorie_wyceny", methods=["POST"])
+def edytuj_kategorie_wyceny():
+    from werkzeug.utils import secure_filename
+    import os
+
+    katid = request.form.get("katid")
+    nowa_nazwa = request.form.get("nazwa_kategorii")
+    nowy_opis = request.form.get("opis_kategorii")
+    nowe_zdjecie = request.files.get("zdjecie")
+
+    kat = session.query(Kategorie_Wyceny).get(katid)
+
+    if not kat:
+        return jsonify(success=False, error="Nie znaleziono kategorii")
+
+    kat.nazwa_kategorii = nowa_nazwa
+    kat.opis_kategorii = nowy_opis
+
+    if nowe_zdjecie and nowe_zdjecie.filename:
+        # Usuń stare zdjęcie jeśli istnieje
+        if kat.zdjecie_url:
+            stara_sciezka = os.path.join(app.root_path, kat.zdjecie_url.strip("/"))
+            if os.path.exists(stara_sciezka):
+                os.remove(stara_sciezka)
+
+        # Zapisz nowe zdjęcie
+        filename = secure_filename(nowe_zdjecie.filename)
+        folder = os.path.join(app.root_path, "static", "zdjecia")
+        os.makedirs(folder, exist_ok=True)
+        sciezka_zapisu = os.path.join(folder, filename)
+        nowe_zdjecie.save(sciezka_zapisu)
+
+        kat.zdjecie_url = f"/static/zdjecia/{filename}"
+
+    try:
+        session.commit()
+        return jsonify(success=True, zdjecie_url=kat.zdjecie_url)
+    except Exception as e:
+        session.rollback()
+        return jsonify(success=False, error=str(e)), 500
+
 
 @app.route('/formularz_oferty', methods=['GET', 'POST'])
 def formularz_oferty():
