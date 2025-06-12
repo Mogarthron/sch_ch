@@ -1,0 +1,80 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2>Kategorie wyceny</h2>
+
+
+<button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#dodajModal">Dodaj kategorię</button>
+
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Typ kategorii</th>
+      <th>Nazwa</th>
+      <th>Opis</th>
+      <th>URL zdjecie</th>
+      <th>Akcje</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for kat in kategorie %}
+    <tr data-id="{{ kat.katid }}">
+        <td class="nazwa">{{ kat.nazwa_kategorii }}</td>
+        <td class="kategoria">{{ kat.pod_kategoria }}</td>
+      <td class="opis">{{ kat.opis_kategorii }}</td>
+      <td class="zdjecie">{{ kat.zdjecie_url }}</td>
+      <td>
+        <button class="btn btn-warning btn-sm edytuj">Edytuj</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- MODAL -->
+<div class="modal fade" id="dodajModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formularzDodajKategorie">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Dodaj wiersz do tabeli Kategorie</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label>Nazwa kategorii</label>
+            <input list="lista_kategorii" name="nazwa_kategorii" class="form-control" required>
+            <datalist id="lista_kategorii">
+                <!-- Opcje zostaną załadowane przez JS -->
+            </datalist>
+            </div>
+          <div class="mb-3">
+            <label>Nazwa podkategorii</label>
+            <input type="text" name="nazwa_podkategorii" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label>Opis</label>
+            <input type="text" name="opis_kategorii" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label for="zdjecie">Załącz zdjęcie</label>
+            <input type="file" name="zdjecie" class="form-control" accept="image/*">
+           </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Zapisz</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='kategorie_wyceny.js') }}">
+
+</script>
+
+
+
+
+
+{% endblock %}

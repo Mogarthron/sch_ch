@@ -9,6 +9,17 @@
         <li class="nav-item">
           <a class="nav-link" href="{{url_for('podsumowanie_ofert')}}">Podsumowanie</a>
         </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Ustawienia
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{{url_for('kategorie_wyceny')}}">Kategorie Wyceny</a></li>
+            <li><a class="dropdown-item" href="{{url_for('pozycje_wyceny')}}">Pozycje Wyceny</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#">...</a></li>
+          </ul>
+        </li>
       
       </ul>
     </div>
