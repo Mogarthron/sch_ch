@@ -196,3 +196,4 @@ cython_debug/
 baza.db
 alembic
 alembic.ini
+static/zdjecia
