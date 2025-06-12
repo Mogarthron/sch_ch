@@ -2,5 +2,74 @@
 
 {% block content %}
 
-pozycje wyceny
+<button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#dodajModal">Dodaj Pozycje Wyceny</button>
+
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Typ kategorii</th>
+      <th>Nazwa</th>
+      <th>Pozycja</th>
+      <th>Cena jednostkowa</th>
+      <th>Jednostka miary</th>
+      <th>Ostatnia edycja</th>
+      <th>Akcje</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for poz in pozycje %}
+    <tr data-id="{{ poz.cid }}">
+      <td class="nazwa_kategorii">{{  poz.kategoria_wyceny.nazwa_kategorii }}</td>
+      <td class="pod_kategoria">{{ poz.kategoria_wyceny.pod_kategoria }}</td>
+      <td class="pozycja">{{ poz.pozycja }}</td>
+      <td class="cena">{{ poz.cena_jednostkowa }}</td>
+      <td class="miara">{{ poz.jednostka_miary }}</td>
+      <td class="data_edycja">{{ poz.data_edycji.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td>
+        <button class="btn btn-warning btn-sm edytuj">Edytuj</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- MODAL -->
+<div class="modal fade" id="dodajModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formularzPozycjeWyceny" novalidate>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Dodaj wiersz do tabeli Pozycje Wyceny</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label>Nazwa kategorii</label>
+            <input list="lista_kategorii" name="nazwa_kategorii" class="form-control" required>
+            <datalist id="lista_kategorii">
+                <!-- Opcje zostaną załadowane przez JS -->
+            </datalist>
+            </div>
+          <div class="mb-3">
+            <label>Nazwa pozycji wyceny</label>
+            <input type="text" name="nazwa_pozycji_wyceny" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label>Cena jedostkowa</label>
+            <input type="text" name="cena_jednostkowa" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label>Jednostka Maiary</label>
+            <input type="text" name="jednostka_miary" class="form-control">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Zapisz</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='pozycje_wyceny.js')}}"></script>
 {% endblock %}
