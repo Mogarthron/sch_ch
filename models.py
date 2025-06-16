@@ -1,8 +1,17 @@
 from sqlalchemy import Column, Integer, Numeric, Float, String, Boolean, Date, DateTime, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
 from datetime import datetime as dt
+from sqlalchemy import create_engine, func, cast, Float, Integer
+from sqlalchemy.orm import sessionmaker
+
 
 Base = declarative_base()
+
+engine = create_engine('sqlite:///baza.db')
+Base.metadata.create_all(engine)
+Session = sessionmaker(bind=engine)
+session = Session()
+
 
 class Kategorie_Wyceny(Base):
     __tablename__ = "kategorie_wyceny"
@@ -30,6 +39,20 @@ class Kategorie_Wyceny(Base):
             opis_kategorii=form.get("opis_kategorii"),
             zdjecie_url=form.get("zdjecie")
         )
+    
+    @classmethod
+    def dict_kat_podkat(cls, session):
+        """
+        Zwraca słownik {"nazwa_kategorii": [lista podkategorii]}
+        """
+        kategorie = session.query(cls.nazwa_kategorii, cls.pod_kategoria).all()
+        wynik = {}
+
+        for nazwa_kategorii, pod_kategoria in kategorie:
+            wynik.setdefault(nazwa_kategorii, []).append(pod_kategoria)
+
+        return wynik
+
 
 class Pozycje_Wyceny(Base):
     __tablename__ = "pozycje_wyceny"
@@ -44,6 +67,8 @@ class Pozycje_Wyceny(Base):
 
     # kategoria_wyceny = relationship("Kategorie_Wyceny", back_populates="kategorie_wyceny")
     kategoria_wyceny = relationship("Kategorie_Wyceny", back_populates="pozycje_wyceny")
+    
+    
 
     def __init__(self, kategoria_id:int, pozycja, cena_jednostkowa, jednostka_miary):
         self.kategoria_id = kategoria_id
@@ -61,7 +86,88 @@ class Pozycje_Wyceny(Base):
             jednostka_miary = form.get("jednostka_miary"),
         )
 
+class Wycena(Base):
+    __tablename__ = "wycena"
 
+    wycid = Column(Integer, primary_key=True)
+    rok = Column(Integer)
+    kolejny_numer = Column(Integer)
+    nr_zlecenia = Column(String(64), nullable=False, unique=True)
+    imie_klienta = Column(String(128), nullable=False)
+    nazwisko_klienta = Column(String(128), nullable=False)
+    data_wprowadzenia = Column(Date, default=dt.now)
+    numer_domu = Column(String(256))
+    ulica = Column(String(256))
+    miasto = Column(String(256))
+    kod_pocztowy = Column(String(16))
+    kontakt_telefon = Column(String(64))
+    kontakt_email = Column(String(128))
+    
+    status_wyceny = Column(String, default="Wprowadzone") #Trzy opcje: Wprowadzone, Wysłane, Zaakceptowane
+    data_wyslania = Column(Date, nullable=True)
+    powod_odrzucenia = Column(String)
+    dodatkowe_uwagi = Column(String)
+
+    def __init__(self, form, session):
+        self.rok = dt.now().year
+
+        # kolejny numer w danym roku:
+        ostatni_numer = session.query(Wycena.kolejny_numer).filter(Wycena.rok == self.rok).order_by(Wycena.kolejny_numer.desc()).first() #type: ignore
+
+        self.kolejny_numer = (ostatni_numer[0] + 1) if ostatni_numer else 1
+        self.nr_zlecenia = f"{self.rok}_{self.kolejny_numer:03d}"
+
+        # Dane z formularza
+        self.imie_klienta = form.get("imie_klienta")
+        self.nazwisko_klienta = form.get("nazwisko_klienta")
+        self.numer_domu = form.get("numer_domu")
+        self.ulica = form.get("ulica")
+        self.miasto = form.get("miasto")
+        self.kod_pocztowy = form.get("kod_pocztowy")
+        self.kontakt_telefon = form.get("kontakt_telefon")
+        self.kontakt_email = form.get("kontakt_email")
+        self.dodatkowe_uwagi = form.get("dodatkowe_uwagi")
+
+    @property
+    def adres_inwestycji(self):
+
+        return f"{self.ulica} {self.numer_domu}, {self.kod_pocztowy} {self.miasto}"
+
+
+class Szczegoly_Wyceny(Base):
+    __tablename__ = "szczegoly_wyceny"
+
+    szwycid = Column(Integer, primary_key=True)
+    wycid = Column(Integer, ForeignKey("wycena.wycid"), nullable=False)
+    pozid = Column(Integer, ForeignKey("pozycje_wyceny.cid"), nullable=True)
+    ilosc = Column(Numeric(10,4), default=0.0)
+    cena_calkowita = Column(Numeric(10,2), default=0.0) #pozycje_wyceny.cena_jednostkowa x ilosc lub możliwosc wpisania z palca
+    indywidualna_nazwa = Column(String(128), default=None) #dodawany w wyjatkowych sytuacjach gdy wiersz nie jest powiązany z pozycje wyceny
+    dodatkowy_opis = Column(String(256))
+    data_wprowadzenia = Column(DateTime, default=dt.now)
+    data_edycji = Column(DateTime, default=dt.now, onupdate=dt.now)
+
+    wycena = relationship("Wycena", backref="szczegoly", lazy="joined")
+    pozycja = relationship("Pozycje_Wyceny", backref="szczegoly", lazy="joined")
+
+    def __init__(self, form, wycid, session):
+        self.wycid = wycid
+        self.pozid = form.get("pozid")  # może być None
+        self.ilosc = float(form.get("ilosc", 0)) or float(0)
+        if form.get("indywidualna_nazwa"):
+            self.indywidualna_nazwa = form.get("wybrana_wartosc") or None
+        self.dodatkowy_opis = form.get("dodatkowy_opis")
+
+        # Jeśli powiązana pozycja istnieje – pobierz cenę jednostkową
+        if self.pozid:
+            pozycja = session.query(Pozycje_Wyceny).filter_by(cid=self.pozid).first()
+            if pozycja:
+                self.cena_calkowita = round(self.ilosc * float(pozycja.cena_jednostkowa), 2)
+            else:
+                self.cena_calkowita = float(0)
+        else:
+            
+            self.cena_calkowita = float(0)
 
 
 class Oferta(Base):
