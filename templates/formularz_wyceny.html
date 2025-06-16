@@ -1,0 +1,58 @@
+{% extends "layout.html" %} {% block content %} 
+
+<form id="formularzWycena" method="post">
+  <div class="row mb-3">
+    
+ <div class="col">
+    <label for="imie_klienta" class="form-label">Imię klienta</label>
+    <input type="text" class="form-control" id="imie_klienta" name="imie_klienta" required>
+  </div>
+
+  <div class="col">
+    <label for="nazwisko_klienta" class="form-label">Nazwisko klienta</label>
+    <input type="text" class="form-control" id="nazwisko_klienta" name="nazwisko_klienta" required>
+  </div>
+  </div>
+
+ <div class="row mb-3">
+<div class="col">
+    <label for="numer_domu" class="form-label">Numer domu</label>
+    <input type="text" class="form-control" id="numer_domu" name="numer_domu">
+  </div>
+
+  <div class="col">
+    <label for="ulica" class="form-label">Ulica</label>
+    <input type="text" class="form-control" id="ulica" name="ulica">
+  </div>
+
+  <div class="col">
+    <label for="miasto" class="form-label">Miasto</label>
+    <input type="text" class="form-control" id="miasto" name="miasto">
+  </div>
+
+  <div class="col">
+    <label for="kod_pocztowy" class="form-label">Kod pocztowy</label>
+    <input type="text" class="form-control" id="kod_pocztowy" name="kod_pocztowy">
+  </div>
+
+ </div>
+<div class="row mb-3">
+<div class="col">
+    <label for="kontakt_telefon" class="form-label">Telefon kontaktowy</label>
+    <input type="tel" class="form-control" id="kontakt_telefon" name="kontakt_telefon">
+  </div>
+
+  <div class="col">
+    <label for="kontakt_email" class="form-label">Adres email</label>
+    <input type="email" class="form-control" id="kontakt_email" name="kontakt_email">
+  </div>
+</div>
+  
+  <div class="mb-3">
+    <label for="dodatkowe_uwagi" class="form-label">Dodatkowe uwagi</label>
+    <textarea class="form-control" id="dodatkowe_uwagi" name="dodatkowe_uwagi" rows="3"></textarea>
+  </div>
+
+  <button type="submit" class="btn btn-primary">Zapisz wycenę</button>
+</form>
+{% endblock %}

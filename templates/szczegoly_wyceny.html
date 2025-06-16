@@ -1,0 +1,209 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2><strong>Wycena nr {{ wycena.nr_zlecenia }}</strong></h2>
+
+<div class="row mb-4">
+  <div class="col">
+    <p><strong>Klient:</strong> {{ wycena.imie_klienta }} {{ wycena.nazwisko_klienta }}</p>
+    <p><strong>Adres:</strong> {{ wycena.ulica }} {{ wycena.numer_domu }}, {{ wycena.kod_pocztowy }} {{ wycena.miasto }}</p>
+    <p><strong>Telefon:</strong> {{ wycena.kontakt_telefon }} | <strong>Email:</strong> {{ wycena.kontakt_email }}</p>
+  </div>
+  <div class="col text-end">
+    <p><strong>Data wystawienia:</strong> {{ wycena.data_wprowadzenia.strftime('%Y-%m-%d') }}</p>
+    <p><strong>Status:</strong> {{ wycena.status_wyceny }}</p>
+    <p><strong>Wartość całkowita:</strong> {{ suma_wyceny | round(2) }} zł</p>
+  </div>
+</div>
+
+<hr>
+<!-- Sekcje -->
+{% for sekcja in sekcje %}
+  <div class="container mb-4">
+    <div class="row {{sekcja}}">
+      <div class="col-3">
+        <h3>{{ sekcja }}</h3>  {# sekcja to tupla np. ("Typ schodów",) #}
+      </div>
+      <div class="col-7">
+      {#
+        <select class="form-select" id="selct_sekcja_{{sekcja}}">
+          <option selected>Wybierz...</option>
+          {% for podkat in sekcje[sekcja] %}
+          <option value="{{podkat}}">{{podkat}}</option>
+          {% endfor %}
+        </select>#}
+        {% set dopasowane_szczegoly = szczegoly | selectattr('pozycja.kategoria_wyceny.nazwa_kategorii', 'equalto', sekcja) | list %}
+        {% if dopasowane_szczegoly %}
+          {# Wyciągamy podkategorię z pierwszego szczegółu #}
+          {% set wybrana_podkategoria = dopasowane_szczegoly[0].pozycja.kategoria_wyceny.pod_kategoria %}
+          <select class="form-select" id="selct_sekcja_{{sekcja}}" disabled>
+            <option selected value="{{ wybrana_podkategoria }}">{{ wybrana_podkategoria }}</option>
+          </select>
+        {% else %}
+          <select class="form-select" id="selct_sekcja_{{sekcja}}">
+            <option selected>Wybierz...</option>
+            {% for podkat in sekcje[sekcja] %}
+              <option value="{{ podkat }}">{{ podkat }}</option>
+            {% endfor %}
+          </select>
+        {% endif %}
+
+      </div>
+      <div class="col-auto text-end">
+        <button type="button" class="btn btn-success" onclick="otworzModalDodajPozycje(this)"
+                data-sekcja="{{ sekcja }}">
+          + Dodaj pozycję
+        </button>
+      </div>
+    </div>
+
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Pozycja</th>
+          <th>Ind. Nazwa</th>
+          <th>Opis</th>
+          <th>Ilość</th>
+          <th>Cena</th>
+          <th>Edytuj</th>
+          <th>Usuń</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        {% for szczegol in szczegoly if szczegol.pozycja.kategoria_wyceny.nazwa_kategorii == sekcja %}
+        <tr>
+          <td>{{ szczegol.pozycja.pozycja }}</td>
+          <td></td>
+          <td>{{ szczegol.dodatkowy_opis }} </td>
+          <td>{{ szczegol.ilosc }} {{ szczegol.pozycja.jednostka_miary }}</td>
+          <td>{{ szczegol.cena_calkowita }} zł</td>
+          <td></td>
+          <td></td>
+        </tr>        
+
+        {% endfor %}
+        
+      </tbody>
+    </table>
+  </div>
+  <hr>
+{% endfor %}
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="dodajPozycjeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formularzPozycja" method="POST">
+      <input type="hidden" name="wycid" value="{{ wycena.wycid }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Dodaj pozycję do sekcji: <span id="modalSekcjaNazwa"></span></h5>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="sekcja_nazwa" id="modalSekcjaInput">
+
+          <!-- Pozycja z bazy -->
+          <div class="mb-3">
+            <label>Wybierz pozycję z bazy</label>
+            <input class="form-control" list="lista_pozycji" name="wybrana_wartosc" id="inputPozid">
+            <datalist id="lista_pozycji">
+              <!-- Wiersze będą dodane przez JS -->
+            </datalist>
+
+            <div class="form-check mt-2">
+              <input class="form-check-input" ischekd="false" type="checkbox" id="checkIndywidualna" name="indywidualna_nazwa">
+              <label class="form-check-label" for="checkIndywidualna">
+                Pozycja indywidualna
+              </label>
+            </div>
+          </div>
+          <!-- input przechowujący id pozycji -->
+          <input type="hidden" name="pozid" id="hiddenPozid">
+          <!-- Ilość -->
+          <div class="mb-3">
+            <label>Ilość</label>
+            <input type="number" name="ilosc" class="form-control" value="1" min="0", step="0.1">
+          </div>
+
+          <!-- Opis -->
+          <div class="mb-3">
+            <label>Dodatkowy opis</label>
+            <textarea name="dodatkowy_opis" class="form-control"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+          <input type="submit" class="btn btn-primary" value="Zapisz">
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function otworzModalDodajPozycje(button) {
+  const row = button.closest(".row");
+  const select = row.querySelector("select");
+  const podkategoria = select.value;
+
+  if (!podkategoria || podkategoria === "Wybierz...") {
+    alert("Wybierz podkategorię, zanim dodasz pozycję.");
+    return;
+  }
+
+  // Ustaw w modalu
+  document.getElementById("modalSekcjaNazwa").textContent = podkategoria;
+  document.getElementById("modalSekcjaInput").value = podkategoria;
+
+  // Pobierz pozycje z API
+  fetch(`/api/podkategorie_pozycje?podkategoria=${encodeURIComponent(podkategoria)}`)
+    .then(res => res.json())
+    .then(pozycje => {
+      const datalist = document.getElementById("lista_pozycji");
+      datalist.innerHTML = "";
+
+      pozycje.forEach(p => {
+        const option = document.createElement("option");
+        option.value = p.nazwa;
+        option.dataset.id = p.id
+        datalist.appendChild(option);
+      });
+    })
+    .catch(err => {
+      console.error("Błąd podczas pobierania pozycji:", err);
+    });
+
+
+  document.getElementById("inputPozid").addEventListener("input", function () {
+    const input = this.value;
+    const options = document.querySelectorAll("#lista_pozycji option");
+    let foundId = null;
+
+    options.forEach(option => {
+      if (option.value === input) {
+        foundId = option.dataset.id;
+      }
+    });
+
+    // hidden input z id
+    const hiddenInput = document.getElementById("hiddenPozid");
+    if (hiddenInput) {
+      hiddenInput.value = foundId || "";
+    }
+  });
+  // Pokaż modal
+  const modal = new bootstrap.Modal(document.getElementById("dodajPozycjeModal"));
+  modal.show();
+}
+
+
+</script>
+
+
+
+
+
+{% endblock %}

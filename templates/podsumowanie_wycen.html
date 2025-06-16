@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block content %}
-  <h2>Podsumowanie ofert</h2>
+  <h2>Podsumowanie wycen</h2>
   <table class="table table-bordered">
     <thead>
       <tr>
@@ -9,33 +9,28 @@
         <th>Data zlecenia</th>
         <th>Status</th>
         <th>Data wysłania</th>
-        <th>Data realizacji</th>
-        <th>Suma pozycji [zł]</th>
         <th></th>
 
       </tr>
     </thead>
     <tbody>
-      {% for oferta in oferty %}
-      <tr>
-        <td>{{ oferta.nr_zlecenia }}</td>
-        <td>{{ oferta.adres_inwestycji }}</td>
-        <td>{{ oferta.data_zlecenia }}</td>     
-        {% if oferta.status_zlecenia == "Wprowadzone" %}   
-        <td>{{ oferta.status_zlecenia }} dni {{oferta.dni_od_zlecenia}} temu</td>
+      {% for wycena in wyceny %}
+      <tr data-id="{{ wycena.wycid }}">
+        <td>{{ wycena.nr_zlecenia }}</td>
+        <td>{{ wycena.adres_inwestycji }}</td>
+        <td>{{ wycena.data_wprowadzenia }}</td>          
+        <td>{{ wycena.status_wyceny }}</td>      
+        {% if wycena.data_wyslania == None%}
+        <td><button type="button" class="btn btn-warning wyslij" data-nr="{{ wycena.nr_zlecenia }}">Wyślij</button></td>
         {% else %}
-        <td>{{ oferta.status_zlecenia }}</td>
+        <td>{{ wycena.data_wyslania }}</td>
         {% endif %}
-        {% if oferta.data_wyslania == None%}
-        <td><button type="button" class="btn btn-warning wyslij" data-nr="{{ oferta.nr_zlecenia }}">Wyślij</button></td>
-        {% else %}
-        <td>{{ oferta.data_wyslania }}</td>
-        {% endif %}
-        <td>{{ oferta.termin_realizacji }}</td>
-        <td>{{ "%.2f"|format(oferta.suma or 0) }} zł</td>
+      
+       
         <td>
-          <form action="/szczegoly_oferty/{{oferta.nr_zlecenia}}" method="post">
-            <input type="submit" class="btn btn-primary" value="Szczegóły">
+          <form method="post">
+             <input type="hidden" name="wycid" value="{{ wycena.wycid }}">
+            <input type="submit" class="btn btn-primary" value="Szczegóły wyceny">
           </form>
         </td>
       </tr>

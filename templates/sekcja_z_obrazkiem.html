@@ -1,4 +1,4 @@
-{% macro sekcja_z_obrazkiem(naglowek, folder, nazwa_pliku, nr_zlecenia) %}
+{% macro sekcja_z_obrazkiem(naglowek, folder, nazwa_pliku, nr_zlecenia, szczegoly=[]) %}
 <h3>{{ naglowek }}: {{ nazwa_pliku }}</h3>
 <div class="row mb-4">
   <div class="col-5">
@@ -10,19 +10,24 @@
     />
   </div>
   <div class="col-7 tabela-sekcja" data-sekcja="{{ folder }}" data-nr_zlecenia="{{ nr_zlecenia }}">
-    <table class="table" id="tabela_{{ folder }}">
-      <tbody></tbody>
+    <table class="table">
+      <tbody>
+        {% for szczegol in szczegoly %}
+        <tr>
+          <td>{{ szczegol.indywidualna_nazwa or szczegol.pozycja.pozycja }}</td>
+          <td>{{ szczegol.ilosc }}</td>
+          <td>{{ "%.2f" | format(szczegol.cena_calkowita) }} zł</td>
+          <td><button class="btn btn-sm btn-outline-danger" onclick="usunWiersz(this)">Usuń</button></td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
 
     <button type="button" class="btn btn-success" onclick="dodajWiersz(this)">
       + Dodaj wiersz
     </button>
 
-    <button
-      type="button"
-      class="btn btn-primary"
-      onclick="zatwierdzTabele(this)"
-    >
+    <button type="button" class="btn btn-primary" onclick="zatwierdzTabele(this)">
       Zatwierdź tabelę
     </button>
   </div>
