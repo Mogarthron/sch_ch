@@ -1,5 +1,5 @@
 from run import *
-from models import session, Wycena
+from models import Wycena
 from flask import request, render_template
 
 @app.route("/formularz_wyceny", methods=["GET", "POST"]) #type: ignore

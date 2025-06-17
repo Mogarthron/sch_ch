@@ -1,6 +1,6 @@
 from flask import render_template, redirect, url_for, request, jsonify
-from models import session, Wycena, Pozycje_Wyceny, Kategorie_Wyceny, Szczegoly_Wyceny
-from run import app
+from models import Wycena, Pozycje_Wyceny, Kategorie_Wyceny, Szczegoly_Wyceny
+from run import app, session
 
 
 @app.route("/szczegoly_wyceny/<int:wycid>", methods=["GET","POST"])
@@ -41,3 +41,37 @@ def podkategorie_pozycje():
     print(podkategoria, pozycje_podkategorii)
 
     return jsonify([{"id": p.cid, "nazwa": p.pozycja} for p in pozycje_podkategorii])
+
+@app.route("/api/szczegoly_wyceny/update", methods=["POST"])
+def update_szczegoly_wyceny():
+    """
+    funkcja updatujaca pola indywidualna nazwa, dodatkowy opis, ilosc, cena całkowita
+    """
+    data = request.get_json()
+    szwycid = data.get("szwycid")
+
+    szczegol = session.query(Szczegoly_Wyceny).get(szwycid)
+    if not szczegol:
+        return jsonify({"success": False, "error": "Nie znaleziono wiersza"}), 404
+
+    szczegol.indywidualna_nazwa = data.get("indywidualna_nazwa", "")
+    szczegol.dodatkowy_opis = data.get("dodatkowy_opis", "")
+    szczegol.ilosc = data.get("ilosc", 0)
+    szczegol.cena_calkowita = data.get("cena_calkowita", 0)
+
+    session.commit()
+
+    jednostka = szczegol.pozycja.jednostka_miary if szczegol.pozycja else ""
+
+    return jsonify({"success": True, "jednostka": jednostka})
+
+
+@app.route("/api/szczegoly_wyceny/delete/<int:szwycid>", methods=["DELETE"])
+def delete_szczegol_wyceny(szwycid):
+    szczegol = session.query(Szczegoly_Wyceny).get(szwycid)
+    if not szczegol:
+        return jsonify({"success": False, "error": "Nie znaleziono wiersza"}), 404
+
+    session.delete(szczegol)
+    session.commit()
+    return jsonify({"success": True})

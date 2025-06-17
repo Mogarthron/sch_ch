@@ -2,9 +2,9 @@ from flask import render_template, request, redirect, url_for, jsonify
 from werkzeug.utils import secure_filename
 import os
 
-from models import session, Kategorie_Wyceny
+from models import Kategorie_Wyceny
 
-from run import app
+from run import app, session
 
 
 @app.route("/kategorie_wyceny", methods=["GET", "POST"])
@@ -30,7 +30,7 @@ def dodaj_kategorie_wyceny():
         filename = secure_filename(plik.filename)
         filepath = os.path.join("static", "zdjecia", filename)
         plik.save(filepath)
-        zdjecie_url = f"/static/zdjecia/{filename}"
+        zdjecie_url = f"/zdjecia/{filename}"
 
     nowa_kategoria = Kategorie_Wyceny(
         nazwa_kategorii=nazwa_kategorii,

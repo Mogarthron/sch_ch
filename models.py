@@ -1,16 +1,16 @@
 from sqlalchemy import Column, Integer, Numeric, Float, String, Boolean, Date, DateTime, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
 from datetime import datetime as dt
-from sqlalchemy import create_engine, func, cast, Float, Integer
-from sqlalchemy.orm import sessionmaker
-
+from sqlalchemy import func, cast, Float, Integer
+# from sqlalchemy import create_engine, func, cast, Float, Integer
+# from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
 
-engine = create_engine('sqlite:///baza.db')
-Base.metadata.create_all(engine)
-Session = sessionmaker(bind=engine)
-session = Session()
+# engine = create_engine('sqlite:///baza.db')
+# Base.metadata.create_all(engine)
+# Session = sessionmaker(bind=engine)
+# session = Session()
 
 
 class Kategorie_Wyceny(Base):
@@ -58,7 +58,7 @@ class Pozycje_Wyceny(Base):
     __tablename__ = "pozycje_wyceny"
 
     cid = Column(Integer, primary_key=True)
-    kategoria_id = Column(Integer, ForeignKey('kategorie_wyceny.katid'), nullable=False)
+    kategoria_id = Column(Integer, ForeignKey('kategorie_wyceny.katid'), nullable=False) # Typ schodó, balustrada itd
     pozycja = Column(String(128), nullable=False)
     cena_jednostkowa = Column(Numeric(10,2))
     jednostka_miary = Column(String(16))
@@ -108,6 +108,8 @@ class Wycena(Base):
     powod_odrzucenia = Column(String)
     dodatkowe_uwagi = Column(String)
 
+    szczegoly = relationship("Szczegoly_Wyceny", back_populates="wycena", cascade="all, delete-orphan")
+
     def __init__(self, form, session):
         self.rok = dt.now().year
 
@@ -133,6 +135,10 @@ class Wycena(Base):
 
         return f"{self.ulica} {self.numer_domu}, {self.kod_pocztowy} {self.miasto}"
 
+    @property
+    def wartosc_calkowita(self):
+
+        return sum(s.cena_calkowita or 0 for s in self.szczegoly)
 
 class Szczegoly_Wyceny(Base):
     __tablename__ = "szczegoly_wyceny"
@@ -147,7 +153,7 @@ class Szczegoly_Wyceny(Base):
     data_wprowadzenia = Column(DateTime, default=dt.now)
     data_edycji = Column(DateTime, default=dt.now, onupdate=dt.now)
 
-    wycena = relationship("Wycena", backref="szczegoly", lazy="joined")
+    wycena = relationship("Wycena", back_populates="szczegoly", lazy="joined")
     pozycja = relationship("Pozycje_Wyceny", backref="szczegoly", lazy="joined")
 
     def __init__(self, form, wycid, session):

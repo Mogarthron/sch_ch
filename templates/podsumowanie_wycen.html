@@ -9,6 +9,8 @@
         <th>Data zlecenia</th>
         <th>Status</th>
         <th>Data wysłania</th>
+        <th>Cena całkowita</th>
+        <th></th>
         <th></th>
 
       </tr>
@@ -25,7 +27,7 @@
         {% else %}
         <td>{{ wycena.data_wyslania }}</td>
         {% endif %}
-      
+        <td>{{ wycena.wartosc_calkowita }}</td>
        
         <td>
           <form method="post">
@@ -33,6 +35,11 @@
             <input type="submit" class="btn btn-primary" value="Szczegóły wyceny">
           </form>
         </td>
+
+        <td>
+          <a href="{{url_for('podglad_wyceny', wycid=wycena.wycid)}}" class="btn btn-primary">Podgląd wyceny</a>
+        </td>
+
       </tr>
       {% endfor %}
     </tbody>

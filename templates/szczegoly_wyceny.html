@@ -25,13 +25,6 @@
         <h3>{{ sekcja }}</h3>  {# sekcja to tupla np. ("Typ schodów",) #}
       </div>
       <div class="col-7">
-      {#
-        <select class="form-select" id="selct_sekcja_{{sekcja}}">
-          <option selected>Wybierz...</option>
-          {% for podkat in sekcje[sekcja] %}
-          <option value="{{podkat}}">{{podkat}}</option>
-          {% endfor %}
-        </select>#}
         {% set dopasowane_szczegoly = szczegoly | selectattr('pozycja.kategoria_wyceny.nazwa_kategorii', 'equalto', sekcja) | list %}
         {% if dopasowane_szczegoly %}
           {# Wyciągamy podkategorię z pierwszego szczegółu #}
@@ -65,21 +58,21 @@
           <th>Opis</th>
           <th>Ilość</th>
           <th>Cena</th>
-          <th>Edytuj</th>
-          <th>Usuń</th>
+          <th></th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
 
         {% for szczegol in szczegoly if szczegol.pozycja.kategoria_wyceny.nazwa_kategorii == sekcja %}
-        <tr>
+        <tr data-id="{{ szczegol.szwycid }}">
           <td>{{ szczegol.pozycja.pozycja }}</td>
-          <td></td>
+          <td>{{szczegol.indywidualna_nazwa}}</td>
           <td>{{ szczegol.dodatkowy_opis }} </td>
           <td>{{ szczegol.ilosc }} {{ szczegol.pozycja.jednostka_miary }}</td>
           <td>{{ szczegol.cena_calkowita }} zł</td>
-          <td></td>
-          <td></td>
+          <td><button class="btn btn-warning" id="edit-{{ szczegol.szwycid }}">Edytuj</button></td>
+          <td><button class="btn btn-danger" id="delate-{{ szczegol.szwycid }}">Usuń</button></td>
         </tr>        
 
         {% endfor %}
@@ -198,7 +191,85 @@ function otworzModalDodajPozycje(button) {
   const modal = new bootstrap.Modal(document.getElementById("dodajPozycjeModal"));
   modal.show();
 }
+// Przycisk edytuj 
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("button[id^='edit-']").forEach(button => {
+    button.addEventListener("click", () => {
+      const szwycid = button.id.replace("edit-", "");
+      const row = document.querySelector(`tr[data-id="${szwycid}"]`);
 
+      if (button.textContent === "Edytuj") {
+        const cells = row.querySelectorAll("td");
+        const [tdPozycja, tdIndNazwa, tdOpis, tdIlosc, tdCena] = cells;
+
+        tdIndNazwa.innerHTML = `<input type="text" class="form-control" value="${tdIndNazwa.textContent.trim()}">`;
+        tdOpis.innerHTML = `<input type="text" class="form-control" value="${tdOpis.textContent.trim()}">`;
+        const ilosc = tdIlosc.textContent.trim().split(" ")[0];  // usuń jednostkę
+        tdIlosc.innerHTML = `<input type="number" class="form-control" value="${ilosc}" step="0.01" min="0">`;
+        const cena = tdCena.textContent.trim().replace(" zł", "");
+        tdCena.innerHTML = `<input type="number" class="form-control" value="${cena}" step="0.01" min="0">`;
+
+        button.textContent = "Zatwierdź";
+        button.classList.remove("btn-warning");
+        button.classList.add("btn-success");
+      } else {
+        const tdIndNazwa = row.querySelector("td:nth-child(2) input").value;
+        const tdOpis = row.querySelector("td:nth-child(3) input").value;
+        const tdIlosc = row.querySelector("td:nth-child(4) input").value;
+        const tdCena = row.querySelector("td:nth-child(5) input").value;
+
+        fetch("/api/szczegoly_wyceny/update", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            szwycid: szwycid,
+            indywidualna_nazwa: tdIndNazwa,
+            dodatkowy_opis: tdOpis,
+            ilosc: parseFloat(tdIlosc),
+            cena_calkowita: parseFloat(tdCena)
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            row.querySelector("td:nth-child(2)").textContent = tdIndNazwa;
+            row.querySelector("td:nth-child(3)").textContent = tdOpis;
+            row.querySelector("td:nth-child(4)").textContent = `${tdIlosc} ${data.jednostka}`;
+            row.querySelector("td:nth-child(5)").textContent = `${parseFloat(tdCena).toFixed(2)} zł`;
+
+            button.textContent = "Edytuj";
+            button.classList.remove("btn-success");
+            button.classList.add("btn-warning");
+          } else {
+            alert("Błąd: " + data.error);
+          }
+        });
+      }
+    });
+  });
+
+  document.querySelectorAll("button[id^='delate-']").forEach(button => {
+    button.addEventListener("click", () => {
+      const szwycid = button.id.replace("delate-", "");
+      if (confirm("Czy na pewno chcesz usunąć ten wiersz?")) {
+        fetch(`/api/szczegoly_wyceny/delete/${szwycid}`, {
+          method: "DELETE"
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            const row = document.querySelector(`tr[data-id="${szwycid}"]`);
+            row.remove();
+          } else {
+            alert("Błąd: " + data.error);
+          }
+        });
+      }
+    });
+  });
+});
 
 </script>
 
