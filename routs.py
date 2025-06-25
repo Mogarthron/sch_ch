@@ -7,7 +7,7 @@ from run import app, session
 
 
 
-@app.route("/")
+@app.route("/sch_ch")
 def index():
     return render_template("index.html")
 
@@ -61,21 +61,23 @@ def podsumowanie_wycen():
     return render_template("podsumowanie_wycen.html", wyceny=wyceny)
 
 
-@app.route("/wyslano_oferte", methods=["POST"])
-def wyslano_oferte():
+@app.route("/wyslano_wycene", methods=["POST"])
+def wyslano_wycene():
     dane = request.get_json()
     nr = dane.get("nr_zlecenia")
 
     try:
-        oferta = session.query(Oferta).filter_by(nr_zlecenia=nr).first()
-        if not oferta:
+        wycena = session.query(Wycena).filter_by(nr_zlecenia=nr).first()
+        if not wycena:
             return jsonify(success=False, error="Nie znaleziono oferty")
 
-        oferta.data_wyslania = dt.now().date() #type: ignore
-        oferta.status_zlecenia = "Wysłano" #type: ignore
+        # wycena.data_wyslania = dt.now().date() #type: ignore
+        # wycena.status_wyceny = wycena.opcje_statusu[2] #type: ignore
+        wycena.wyslano_wycene()
         session.commit()
 
-        return jsonify(success=True, data_wyslania=str(oferta.data_wyslania))
+        # return jsonify(success=True, data_wyslania=str(wycena.data_wyslania))
+        return redirect(url_for("podsumowanie_wycen"))
 
     except Exception as e:
         session.rollback()

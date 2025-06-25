@@ -1,16 +1,11 @@
 {% extends "layout.html" %} {% block content %}
 <div class="container mb-3">
-  <div class="d-flex justify-content-end mb-3">
-  <button class="btn btn-outline-secondary d-print-none" onclick="window.print()">
-    Drukuj ofertę z przeglądarki
-  </button>
-</div>
   <div class="row mb-3">
     
     <div class="col-3">
       <img
-        src="{{ url_for('static', filename='schody-chudzinski-logo.png') }}"        
-        alt="LOGO"
+        src="schody-chudzinski-logo.png"        
+        alt="LOGO PDF"
       />
     </div>
     <div class="col text-end">
@@ -24,25 +19,21 @@
     </div>    
   </div>
   {% for sekcja in sekcje %}
-   {% set szczegoly_dla_sekcji = wycena.szczegoly | selectattr("pozycja.kategoria_wyceny.nazwa_kategorii", "equalto", sekcja) | list %}
+  {% set szczegoly_dla_sekcji = wycena.szczegoly | selectattr("pozycja.kategoria_wyceny.nazwa_kategorii", "equalto", sekcja) | list %}
   {% if szczegoly_dla_sekcji %}
     {% set podkategoria = szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.pod_kategoria %}
     <h3>{{ sekcja }}: {{ podkategoria }}</h3>
 
     <div class="row">
-      <div class="col-auto">
-        <img src="{{ url_for('static', filename=szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.zdjecie_url) }}"
-             alt="{{ podkategoria }}"
-             class="rounded shadow-sm" 
-             width="200"
-             height="200"/>
+      <div class="col-4">
+        <img src="{{ zdjecia[sekcja] }}" alt="{{ podkategoria }}"
+               style="width: 200px; height: 200px; object-fit: contain;" />
       </div>
       <div class="col-8">
         <table class="table">
           <tbody>
             {% for szczegol in szczegoly_dla_sekcji %}
             <tr>
-              {#<td>{{ szczegol.pozycja.pozycja if szczegol.pozycja else szczegol.indywidualna_nazwa }}</td>#}
               <td>{{ szczegol.indywidualna_nazwa if szczegol.indywidualna_nazwa else szczegol.pozycja.pozycja }}</td>
               <td>{{ szczegol.dodatkowy_opis }}</td>
               <td>
@@ -62,7 +53,7 @@
     </div>
   {% endif %}
   <br>
-  {% endfor %}
+{% endfor %}
 
 </div>
 

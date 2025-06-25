@@ -30,7 +30,7 @@ def dodaj_kategorie_wyceny():
         filename = secure_filename(plik.filename)
         filepath = os.path.join("static", "zdjecia", filename)
         plik.save(filepath)
-        zdjecie_url = f"/zdjecia/{filename}"
+        zdjecie_url = f"zdjecia/{filename}"
 
     nowa_kategoria = Kategorie_Wyceny(
         nazwa_kategorii=nazwa_kategorii,
@@ -85,7 +85,7 @@ def edytuj_kategorie_wyceny():
         sciezka_zapisu = os.path.join(folder, filename)
         nowe_zdjecie.save(sciezka_zapisu)
 
-        kat.zdjecie_url = f"/static/zdjecia/{filename}"
+        kat.zdjecie_url = f"zdjecia/{filename}"
 
     try:
         session.commit()

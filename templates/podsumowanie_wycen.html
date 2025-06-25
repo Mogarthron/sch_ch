@@ -1,6 +1,24 @@
 {% extends "layout.html" %}
 {% block content %}
   <h2>Podsumowanie wycen</h2>
+  <div class="row mb-3">
+  <div class="col-auto">
+    <select id="filtrKolumna" class="form-select">
+      <option value="0">Nr zlecenia</option>
+      <option value="1">Adres inwestycji</option>
+      <option value="2">Data zlecenia</option>
+      <option value="3">Status</option>
+      <option value="4">Data wysłania</option>
+      <option value="5">Cena całkowita</option>
+    </select>
+  </div>
+  <div class="col-auto">
+    <input type="text" id="filtrWartosc" class="form-control" placeholder="Wpisz wartość..." oninput="filtrujTabele()">
+  </div>
+  <div class="col-auto">
+    <button class="btn btn-secondary" onclick="resetujFiltr()">Resetuj</button>
+  </div>
+</div>
   <table class="table table-bordered">
     <thead>
       <tr>
@@ -22,7 +40,9 @@
         <td>{{ wycena.adres_inwestycji }}</td>
         <td>{{ wycena.data_wprowadzenia }}</td>          
         <td>{{ wycena.status_wyceny }}</td>      
-        {% if wycena.data_wyslania == None%}
+        {% if wycena.data_wyslania == None and wycena.wartosc_calkowita == 0 %}
+        <td><button type="button" class="btn btn-warning" disabled>Wyślij</button></td>
+        {% elif wycena.data_wyslania == None and wycena.wartosc_calkowita > 0 %}
         <td><button type="button" class="btn btn-warning wyslij" data-nr="{{ wycena.nr_zlecenia }}">Wyślij</button></td>
         {% else %}
         <td>{{ wycena.data_wyslania }}</td>
@@ -51,7 +71,7 @@ document.querySelectorAll(".wyslij").forEach(button => {
     const nrZlecenia = this.dataset.nr;
     const td = this.closest("td");
 
-    fetch("/wyslano_oferte", {
+    fetch("/wyslano_wycene", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -68,6 +88,27 @@ document.querySelectorAll(".wyslij").forEach(button => {
     });
   });
 });
+
+function filtrujTabele() {
+  const kolumna = parseInt(document.getElementById("filtrKolumna").value);
+  const wartosc = document.getElementById("filtrWartosc").value.toLowerCase();
+  const wiersze = document.querySelectorAll("table tbody tr");
+
+  wiersze.forEach(row => {
+    const komorka = row.cells[kolumna];
+    if (!komorka) return;
+    const tekst = komorka.textContent.toLowerCase();
+    row.style.display = tekst.includes(wartosc) ? "" : "none";
+  });
+}
+
+function resetujFiltr() {
+  document.getElementById("filtrKolumna").selectedIndex = 0;
+  document.getElementById("filtrWartosc").value = "";
+  document.querySelectorAll("table tbody tr").forEach(row => {
+    row.style.display = "";
+  });
+}
 </script>
 
 

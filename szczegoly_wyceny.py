@@ -54,7 +54,7 @@ def update_szczegoly_wyceny():
     if not szczegol:
         return jsonify({"success": False, "error": "Nie znaleziono wiersza"}), 404
 
-    szczegol.indywidualna_nazwa = data.get("indywidualna_nazwa", "")
+    szczegol.indywidualna_nazwa = data.get("indywidualna_nazwa", None)
     szczegol.dodatkowy_opis = data.get("dodatkowy_opis", "")
     szczegol.ilosc = data.get("ilosc", 0)
     szczegol.cena_calkowita = data.get("cena_calkowita", 0)

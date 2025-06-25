@@ -197,3 +197,4 @@ baza.db
 alembic
 alembic.ini
 static/zdjecia
+static/pdf

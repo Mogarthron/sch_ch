@@ -89,6 +89,13 @@ class Pozycje_Wyceny(Base):
 class Wycena(Base):
     __tablename__ = "wycena"
 
+    opcje_statusu = {
+                        1: "Wprowadzone",
+                        2: "Wysłane",
+                        3: "Zaakceptowane",
+                        4: "Odrzucone"
+                     }
+
     wycid = Column(Integer, primary_key=True)
     rok = Column(Integer)
     kolejny_numer = Column(Integer)
@@ -103,16 +110,17 @@ class Wycena(Base):
     kontakt_telefon = Column(String(64))
     kontakt_email = Column(String(128))
     
-    status_wyceny = Column(String, default="Wprowadzone") #Trzy opcje: Wprowadzone, Wysłane, Zaakceptowane
+    status_wyceny = Column(String, default="Wprowadzone")
     data_wyslania = Column(Date, nullable=True)
     powod_odrzucenia = Column(String)
     dodatkowe_uwagi = Column(String)
+    data_zamkniecia = Column(Date, nullable=True) #Data zaakceptowania lub odrzucenia wyceny, po tej dacie powinno się wysłąć odertę
 
     szczegoly = relationship("Szczegoly_Wyceny", back_populates="wycena", cascade="all, delete-orphan")
 
     def __init__(self, form, session):
-        self.rok = dt.now().year
 
+        self.rok = dt.now().year
         # kolejny numer w danym roku:
         ostatni_numer = session.query(Wycena.kolejny_numer).filter(Wycena.rok == self.rok).order_by(Wycena.kolejny_numer.desc()).first() #type: ignore
 
@@ -139,6 +147,19 @@ class Wycena(Base):
     def wartosc_calkowita(self):
 
         return sum(s.cena_calkowita or 0 for s in self.szczegoly)
+
+    def wyslano_wycene(self):
+        self.data_wyslania = dt.now().date()
+        self.status_wyceny = self.opcje_statusu[2]
+    
+    def zamknij_wycene(self, zaakceptowano=True, powod_odrzucenia:str=None):
+        self.data_zamkniecia = dt.now().date()
+        if zaakceptowano:
+            self.status_wyceny = self.opcje_statusu[3]
+        else:
+            self.status_wyceny = self.opcje_statusu[4]
+            self.powod_odrzucenia = powod_odrzucenia
+
 
 class Szczegoly_Wyceny(Base):
     __tablename__ = "szczegoly_wyceny"

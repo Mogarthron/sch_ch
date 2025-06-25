@@ -67,7 +67,11 @@
         {% for szczegol in szczegoly if szczegol.pozycja.kategoria_wyceny.nazwa_kategorii == sekcja %}
         <tr data-id="{{ szczegol.szwycid }}">
           <td>{{ szczegol.pozycja.pozycja }}</td>
-          <td>{{szczegol.indywidualna_nazwa}}</td>
+          {% if szczegol.indywidualna_nazwa == None %}
+          <td></td>
+          {% else %}
+          <td>{{ szczegol.indywidualna_nazwa }}</td>
+          {% endif %}
           <td>{{ szczegol.dodatkowy_opis }} </td>
           <td>{{ szczegol.ilosc }} {{ szczegol.pozycja.jednostka_miary }}</td>
           <td>{{ szczegol.cena_calkowita }} zł</td>
