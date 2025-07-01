@@ -2,16 +2,83 @@ from sqlalchemy import Column, Integer, Numeric, Float, String, Boolean, Date, D
 from sqlalchemy.orm import declarative_base, relationship
 from datetime import datetime as dt
 from sqlalchemy import func, cast, Float, Integer
-# from sqlalchemy import create_engine, func, cast, Float, Integer
-# from sqlalchemy.orm import sessionmaker
+from werkzeug.security import generate_password_hash, check_password_hash 
+from flask_login import UserMixin
+
+from collections import defaultdict
 
 Base = declarative_base()
 
-# engine = create_engine('sqlite:///baza.db')
-# Base.metadata.create_all(engine)
-# Session = sessionmaker(bind=engine)
-# session = Session()
+class User(Base, UserMixin):
+    __tablename__ = "user"
 
+    user_role = {
+        1: "admin",
+        2: "kierownik",
+        3: "pracownik biuro",
+        4: "procownik produkcja"
+
+    }
+
+    user_id = Column(Integer, primary_key=True)
+    user_name = Column(String(128), nullable=False, unique=True)
+    imie = Column(String(128), nullable=False)
+    nazwisko = Column(String(128), nullable=False)
+    rola = Column(String(68), nullable=False)
+    haslo_hash = Column(String(128), nullable=False)
+    aktywny = Column(Boolean, default=True)
+
+    handlowiec = relationship("Handlowiec", back_populates="user", cascade="all, delete-orphan", uselist=False)
+
+    def __init__(self, imie, nazwisko, user_name, rola, haslo):
+        self.imie = imie
+        self.nazwisko = nazwisko
+        self.user_name = user_name
+        self.rola = rola
+        self.set_password(haslo)
+
+    def set_password(self, haslo):
+        self.haslo_hash = generate_password_hash(haslo)
+
+    def check_password(self, haslo):
+        return check_password_hash(self.haslo_hash, haslo)
+    
+    def get_id(self):
+        return str(self.user_id)
+    
+    def dezaktywoj_usera(self):
+        if self.aktywny:
+            self.aktywny = False
+
+    @classmethod
+    def from_form(cls, form, session):
+       
+        # Sprawdzenie, czy użytkownik już istnieje
+        user_name = form.get("user_name")
+
+        existing_user = session.query(cls).filter_by(user_name=user_name).first()
+        if existing_user:
+            raise ValueError(f"Użytkownik '{user_name}' już istnieje.")
+        
+        return cls(
+            user_name=form.get("user_name"),
+            imie=form.get("imie"),
+            nazwisko=form.get("nazwisko"),
+            rola=form.get("rola"),
+            haslo=form.get("haslo")
+        )
+
+class Handlowiec(Base):
+    __tablename__ = "handlowiec"
+
+    handlowiec_id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('user.user_id'), nullable=False)
+    nr_kontaktowy = Column(String(128), nullable=False)
+    email = Column(String(128), nullable=False)
+
+    user = relationship("User", back_populates="handlowiec")
+    wyceny = relationship("Wycena", back_populates="handlowiec", cascade="all, delete-orphan")
+    
 
 class Kategorie_Wyceny(Base):
     __tablename__ = "kategorie_wyceny"
@@ -65,7 +132,6 @@ class Pozycje_Wyceny(Base):
     data_wprowadzenia = Column(DateTime, default=dt.now)
     data_edycji = Column(DateTime, default=dt.now, onupdate=dt.now)
 
-    # kategoria_wyceny = relationship("Kategorie_Wyceny", back_populates="kategorie_wyceny")
     kategoria_wyceny = relationship("Kategorie_Wyceny", back_populates="pozycje_wyceny")
     
     
@@ -97,12 +163,13 @@ class Wycena(Base):
                      }
 
     wycid = Column(Integer, primary_key=True)
+    handlowiec_id = Column(Integer, ForeignKey('handlowiec.handlowiec_id'), nullable=True)
     rok = Column(Integer)
     kolejny_numer = Column(Integer)
     nr_zlecenia = Column(String(64), nullable=False, unique=True)
     imie_klienta = Column(String(128), nullable=False)
     nazwisko_klienta = Column(String(128), nullable=False)
-    data_wprowadzenia = Column(Date, default=dt.now)
+    data_wprowadzenia = Column(DateTime, default=dt.now)
     numer_domu = Column(String(256))
     ulica = Column(String(256))
     miasto = Column(String(256))
@@ -111,14 +178,15 @@ class Wycena(Base):
     kontakt_email = Column(String(128))
     
     status_wyceny = Column(String, default="Wprowadzone")
-    data_wyslania = Column(Date, nullable=True)
+    data_wyslania = Column(DateTime, nullable=True)
     powod_odrzucenia = Column(String)
     dodatkowe_uwagi = Column(String)
-    data_zamkniecia = Column(Date, nullable=True) #Data zaakceptowania lub odrzucenia wyceny, po tej dacie powinno się wysłąć odertę
+    data_zamkniecia = Column(DateTime, nullable=True) #Data zaakceptowania lub odrzucenia wyceny, po tej dacie powinno się wysłąć odertę
 
     szczegoly = relationship("Szczegoly_Wyceny", back_populates="wycena", cascade="all, delete-orphan")
+    handlowiec = relationship("Handlowiec", back_populates="wyceny")
 
-    def __init__(self, form, session):
+    def __init__(self, form, session, handlowiec_id):
 
         self.rok = dt.now().year
         # kolejny numer w danym roku:
@@ -130,6 +198,7 @@ class Wycena(Base):
         # Dane z formularza
         self.imie_klienta = form.get("imie_klienta")
         self.nazwisko_klienta = form.get("nazwisko_klienta")
+        self.handlowiec_id = handlowiec_id
         self.numer_domu = form.get("numer_domu")
         self.ulica = form.get("ulica")
         self.miasto = form.get("miasto")
@@ -147,19 +216,55 @@ class Wycena(Base):
     def wartosc_calkowita(self):
 
         return sum(s.cena_calkowita or 0 for s in self.szczegoly)
+    
+    @property
+    def wartosc_podsumowanie_kategorii(self):
+        """
+        Zwraca słownik {"kategoria": suma} na podstawie szczegółów wyceny.
+        """
+        podsumowanie = defaultdict(float)
+
+        for szczegol in self.szczegoly:
+            if szczegol.pozycja and szczegol.pozycja.kategoria_wyceny:
+                nazwa_kategorii = szczegol.pozycja.kategoria_wyceny.nazwa_kategorii
+            else:
+                nazwa_kategorii = "Inne"
+
+            podsumowanie[nazwa_kategorii] += float(szczegol.cena_calkowita) or 0.0
+
+        return dict(podsumowanie)
+
+    @property
+    def dane_handlowca(self):
+        if self.handlowiec:
+            return {"imie": self.handlowiec.user.imie, "nazwisko": self.handlowiec.user.nazwisko, "email": self.handlowiec.email, "nr_kontaktowy": self.handlowiec.nr_kontaktowy}
+        return "Brak przypisanego handlowca"
 
     def wyslano_wycene(self):
-        self.data_wyslania = dt.now().date()
+        self.data_wyslania = dt.now()
         self.status_wyceny = self.opcje_statusu[2]
     
     def zamknij_wycene(self, zaakceptowano=True, powod_odrzucenia:str=None):
-        self.data_zamkniecia = dt.now().date()
+        self.data_zamkniecia = dt.now()
         if zaakceptowano:
             self.status_wyceny = self.opcje_statusu[3]
         else:
             self.status_wyceny = self.opcje_statusu[4]
             self.powod_odrzucenia = powod_odrzucenia
 
+    def aktualizuj_z_formularza(self, form):
+        """
+        funkcja aktualizujaca dane wyceny
+        """
+        self.imie_klienta = form.get("imie_klienta")
+        self.nazwisko_klienta = form.get("nazwisko_klienta")
+        self.numer_domu = form.get("numer_domu")
+        self.ulica = form.get("ulica")
+        self.miasto = form.get("miasto")
+        self.kod_pocztowy = form.get("kod_pocztowy")
+        self.kontakt_telefon = form.get("kontakt_telefon")
+        self.kontakt_email = form.get("kontakt_email")
+        self.dodatkowe_uwagi = form.get("dodatkowe_uwagi")
 
 class Szczegoly_Wyceny(Base):
     __tablename__ = "szczegoly_wyceny"

@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 
 from models import *
 from run import app, session
+from auth import login_required
 
 
 
@@ -13,6 +14,7 @@ def index():
 
 
 @app.route('/formularz_oferty', methods=['GET', 'POST'])
+@login_required
 def formularz_oferty():
 
     typy_schodow = [file.split('.')[0] for file in os.listdir("./static/typy_schodow")]
@@ -35,6 +37,7 @@ def formularz_oferty():
                                                     polaczenie_z_posadzka=polaczenie_z_posadzka)
 
 @app.route('/oferta/<nr_zlecenia>', methods=['GET', 'POST'])
+@login_required
 def oferta(nr_zlecenia):
 
     
@@ -46,6 +49,7 @@ def oferta(nr_zlecenia):
     return render_template('oferta.html', dane=dane)
 
 @app.route("/podsumowanie_wycen", methods=["GET", "POST"])
+@login_required
 def podsumowanie_wycen():
     
     wyceny = (
@@ -85,6 +89,7 @@ def wyslano_wycene():
 
 
 @app.route("/szczegoly_oferty/<nr_zlecenia>", methods=["GET", "POST"])
+@login_required
 def szeczegoly_oferty(nr_zlecenia):
 
     oferta_naglowek = session.query(Oferta).filter(Oferta.nr_zlecenia==nr_zlecenia).first()

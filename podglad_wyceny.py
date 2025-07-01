@@ -1,11 +1,13 @@
 from flask import render_template, redirect, url_for, request, jsonify, make_response
 from models import Wycena, Pozycje_Wyceny, Kategorie_Wyceny, Szczegoly_Wyceny
 from run import app, session
+from auth import login_required
 # from weasyprint import HTML
 import os
 
 
 @app.route("/podglad_wyceny/<wycid>", methods=["GET", "POST"])
+@login_required
 def podglad_wyceny(wycid):
 
     wycena = session.query(Wycena).filter(Wycena.wycid == int(wycid)).first()

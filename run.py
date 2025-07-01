@@ -17,6 +17,7 @@ from formularz_wyceny import *
 from kategorie_wyceny import *
 from szczegoly_wyceny import *
 from podglad_wyceny import *
+from auth import *
 
 
 if __name__ == '__main__':
