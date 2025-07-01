@@ -9,6 +9,7 @@
         <li class="nav-item">
           <a class="nav-link" href="{{url_for('podsumowanie_wycen')}}">Podsumowanie wycen</a>
         </li>
+         {#{% if current_user.is_authenticated %}#}
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Ustawienia
@@ -17,10 +18,43 @@
             <li><a class="dropdown-item" href="{{url_for('kategorie_wyceny')}}">Kategorie Wyceny</a></li>
             <li><a class="dropdown-item" href="{{url_for('pozycje_wyceny')}}">Pozycje Wyceny</a></li>
             <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{{url_for('register')}}">Dodaj Użytkownika</a></li>
+            <li><a class="dropdown-item" href="{{url_for('dodaj_handlowca')}}">Dodaj Handlowca</a></li>
+            <li><a class="dropdown-item" href="{{url_for('lista_handlowcow')}}">Lista Handlowców</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('lista_uzytkownikow') }}">Lista Użytkowników</a></li>
             <li><a class="dropdown-item" href="#">...</a></li>
           </ul>
         </li>
+        {#{% else %}#}
+
+        <!-- <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Ustawienia
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#">...</a></li>
+            
+          </ul>
+        </li> -->
+
+        {#{% endif %}#}
       
+      </ul>
+
+       <!-- LOGIN / LOGOUT -->
+      <ul class="navbar-nav">
+        {% if current_user.is_authenticated %}
+          <li class="nav-item">
+            <span class="nav-link">Zalogowano jako: {{ current_user.user_name }}</span>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-danger" href="{{ url_for('logout') }}">Wyloguj</a>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('login') }}">Zaloguj</a>
+          </li>
+        {% endif %}
       </ul>
     </div>
   </div>

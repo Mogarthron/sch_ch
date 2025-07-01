@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mb-3">
+<form method="post">
+  <input class="form-control mb-2" name="user_name" placeholder="Nazwa użytkownika" required>
+  <input class="form-control mb-2" name="imie" placeholder="Imię" required>
+  <input class="form-control mb-2" name="nazwisko" placeholder="Nazwisko" required>
+  <select class="form-select mb-2" name="rola" required>
+    <option value="admin">admin</option>
+    <option value="kierownik">kierownik</option>
+    <option value="pracownik biuro">pracownik biuro</option>
+    <option value="pracownik produkcja">pracownik produkcja</option>
+  </select>
+  <input class="form-control mb-2" name="haslo" type="password" placeholder="Hasło" required>
+  <button class="btn btn-primary" type="submit">Zarejestruj</button>
+</form>  
+</div>
+
+
+{% endblock %}

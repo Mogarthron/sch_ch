@@ -1,21 +1,37 @@
 {% extends "layout.html" %} {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/print.css') }}" media="print">
 <div class="container mb-3">
   <div class="d-flex justify-content-end mb-3">
   <button class="btn btn-outline-secondary d-print-none" onclick="window.print()">
     Drukuj ofertę z przeglądarki
   </button>
-</div>
+  </div>  
+  
   <div class="row mb-3">
-    
-    <div class="col-3">
+    <div class="col text-center">
+
       <img
         src="{{ url_for('static', filename='schody-chudzinski-logo.png') }}"        
         alt="LOGO"
       />
+      
+    </div>
+
+  </div>
+
+
+  <div class="row mb-3">
+    
+    <div class="col">
+      <p><strong>Oferta wystawiona przez:</strong> 
+        {{ wycena.dane_handlowca["imie"] }} {{ wycena.dane_handlowca["nazwisko"] }}<br>
+        <strong>Email kontaktowy:</strong> {{ wycena.dane_handlowca["email"] }}<br>
+        <strong>Telefon kontakowy:</strong> {{ wycena.dane_handlowca["nr_kontaktowy"] }}
+      </p>
     </div>
     <div class="col text-end">
-      <p>Data wystawienia: {{ wycena.data_wprowadzenia }}</p>
-      <p>Imię i nazwisko: {{ wycena.imie_klienta}} {{ wycena.nazwisko_klienta }}</p>
+      <p>dla P. {{ wycena.imie_klienta}} {{ wycena.nazwisko_klienta }}</p>
+      <p>Data wystawienia: {{ wycena.data_wprowadzenia.strftime('%Y-%m-%d') }}</p>
     </div>
   </div>
   <div class="row mb-3">
@@ -23,19 +39,26 @@
       <p>Adres inwestycji: {{ wycena.adres_inwestycji }}</p>
     </div>    
   </div>
+  <div class="row mb-3">
+    <div class="col text-center">
+      <p>oferta ważna 31 dni od daty wystawienia. W tym okresie cena lub warunki wykonania mogą ulec zmianie.</p>
+    </div>    
+  </div>
   {% for sekcja in sekcje %}
    {% set szczegoly_dla_sekcji = wycena.szczegoly | selectattr("pozycja.kategoria_wyceny.nazwa_kategorii", "equalto", sekcja) | list %}
   {% if szczegoly_dla_sekcji %}
     {% set podkategoria = szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.pod_kategoria %}
-    <h3>{{ sekcja }}: {{ podkategoria }}</h3>
-
+    <div class="avoid-break">
+        <h3>{{ sekcja }}: {{ podkategoria }}</h3>
+    <!-- opis podkategorii -->
+    <p>{{ szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.opis_kategorii }}</p>
     <div class="row">
       <div class="col-auto">
         <img src="{{ url_for('static', filename=szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.zdjecie_url) }}"
              alt="{{ podkategoria }}"
              class="rounded shadow-sm" 
-             width="200"
-             height="200"/>
+             width="190"
+             height="190"/>
       </div>
       <div class="col-8">
         <table class="table">
@@ -60,9 +83,25 @@
         </table>
       </div>
     </div>
+
+    </div>
+    
   {% endif %}
   <br>
   {% endfor %}
+
+<!-- Podsumowanie wartosci kategorii -->
+
+<div class="row">
+  <div class="col text-end">
+{% for kat, wartosc in wycena.wartosc_podsumowanie_kategorii.items() %}
+  <p><strong>{{ kat }}:</strong> {{ wartosc|round(2) }} zł</p>
+{% endfor %}
+
+  </div>
+</div>
+
+
 
 </div>
 

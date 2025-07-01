@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Edytuj użytkownika</h2>
+<form method="POST">
+  <div class="mb-3">
+    <label>Imię</label>
+    <input type="text" name="imie" value="{{ user.imie }}" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label>Nazwisko</label>
+    <input type="text" name="nazwisko" value="{{ user.nazwisko }}" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label>Rola</label>
+    <select name="rola" class="form-select">
+      {% for _, rola in user.user_role.items() %}
+        <option value="{{ rola }}" {% if user.rola == rola %}selected{% endif %}>{{ rola }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="mb-3">
+    <label>Nowe hasło (opcjonalnie)</label>
+    <input type="password" name="haslo" class="form-control">
+  </div>
+  <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
+</form>
+{% endblock %}

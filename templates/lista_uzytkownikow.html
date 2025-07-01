@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Lista użytkowników</h2>
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Login</th>
+      <th>Imię</th>
+      <th>Nazwisko</th>
+      <th>Rola</th>
+      <th>Akcje</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for u in uzytkownicy %}
+    <tr>
+      <td>{{ u.user_id }}</td>
+      <td>{{ u.user_name }}</td>
+      <td>{{ u.imie }}</td>
+      <td>{{ u.nazwisko }}</td>
+      <td>{{ u.rola }}</td>
+      <td>
+        <a href="{{ url_for('edytuj_uzytkownika', user_id=u.user_id) }}" class="btn btn-sm btn-warning">Edytuj</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

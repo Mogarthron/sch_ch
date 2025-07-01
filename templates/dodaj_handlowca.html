@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>Dodaj handlowca na podstawie istniejącego użytkownika</h2>
+
+<form method="POST">
+  <div class="mb-3">
+    <label for="user_id">Wybierz użytkownika</label>
+    <select name="user_id" id="user_id" class="form-select" required>
+      <option value="">-- wybierz --</option>
+      {% for user in uzytkownicy %}
+        <option value="{{ user.user_id }}">{{ user.user_name }} ({{ user.imie }} {{ user.nazwisko }})</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label for="email">Email handlowca</label>
+    <input type="email" name="email" id="email" class="form-control" required>
+  </div>
+
+  <div class="mb-3">
+    <label for="telefon">Numer kontaktowy</label>
+    <input type="text" name="telefon" id="telefon" class="form-control" required>
+  </div>
+
+  <input type="submit" class="btn btn-primary" value="Dodaj handlowca">
+</form>
+
+{% endblock %}

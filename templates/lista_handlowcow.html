@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2 class="mb-3">Lista handlowców</h2>
+
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Imię</th>
+      <th>Nazwisko</th>
+      <th>Login</th>
+      <th>Email</th>
+      <th>Telefon</th>
+      <th>Akcje</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for h in handlowcy %}
+    <tr>
+      <td>{{ h.user.imie }}</td>
+      <td>{{ h.user.nazwisko }}</td>
+      <td>{{ h.user.user_name }}</td>
+      <td>{{ h.email }}</td>
+      <td>{{ h.nr_kontaktowy }}</td>
+      <td>
+        <a href="{{ url_for('edytuj_handlowca', handlowiec_id=h.handlowiec_id) }}" class="btn btn-sm btn-warning">Edytuj</a>
+        <a href="{{ url_for('reset_hasla', user_id=h.user.user_id) }}" class="btn btn-sm btn-secondary">Reset hasła</a>
+  <a href="{{ url_for('usun_handlowca', handlowiec_id=h.handlowiec_id) }}" class="btn btn-sm btn-danger"
+     onclick="return confirm('Czy na pewno chcesz usunąć tego handlowca?');">Usuń</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+
+{% endblock %}

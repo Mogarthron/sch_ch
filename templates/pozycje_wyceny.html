@@ -4,6 +4,18 @@
 
 <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#dodajModal">Dodaj Pozycje Wyceny</button>
 
+<div class="row mb-3">
+  <div class="col">
+    <select id="filtr_kategoria" class="form-select">
+      <option value="">Wszystkie typy kategorii</option>
+      <!-- Opcje zostaną dodane przez js -->
+    </select>
+  </div>
+  <div class="col">
+    <input type="text" id="filtr_nazwa" class="form-control" placeholder="Filtruj po nazwie kategorii...">
+  </div>
+</div>
+
 <table class="table table-bordered">
   <thead>
     <tr>
