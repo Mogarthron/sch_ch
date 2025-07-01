@@ -181,3 +181,44 @@ document.addEventListener("DOMContentLoaded", function () {
   const modalEl = document.getElementById('dodajModal');
   const modal = new bootstrap.Modal(modalEl);  // działa tylko, jeśli modalEl istnieje
 });
+
+
+// filtorwanie tabeli 
+document.addEventListener("DOMContentLoaded", () => {
+  const filtrKategoria = document.getElementById("filtr_kategoria");
+  const filtrNazwa = document.getElementById("filtr_nazwa");
+
+  // Automatyczne generowanie unikalnych opcji do selecta z kolumny "nazwa_kategorii"
+  const kategorieSet = new Set();
+  document.querySelectorAll("table tbody tr").forEach(row => {
+    const kategoria = row.querySelector(".nazwa_kategorii").textContent.trim();
+    if (kategoria) kategorieSet.add(kategoria);
+  });
+
+  const selectKategoria = document.getElementById("filtr_kategoria");
+  [...kategorieSet].sort().forEach(kat => {
+    const option = document.createElement("option");
+    option.value = kat;
+    option.textContent = kat;
+    selectKategoria.appendChild(option);
+  });
+
+  const filtrujTabele = () => {
+    const kategoriaWartosc = filtrKategoria.value.toLowerCase();
+    const nazwaWartosc = filtrNazwa.value.toLowerCase();
+
+    document.querySelectorAll("table tbody tr").forEach(row => {
+      const kolKategoria = row.querySelector(".nazwa_kategorii").textContent.toLowerCase();
+      const kolNazwa = row.querySelector(".pod_kategoria").textContent.toLowerCase();
+
+      const pokaz =
+        kolKategoria.includes(kategoriaWartosc) &&
+        kolNazwa.includes(nazwaWartosc);
+
+      row.style.display = pokaz ? "" : "none";
+    });
+  };
+
+  filtrKategoria.addEventListener("input", filtrujTabele);
+  filtrNazwa.addEventListener("input", filtrujTabele);
+});
