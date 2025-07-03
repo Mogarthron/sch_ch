@@ -5,11 +5,13 @@
   <div class="col-auto">
     <select id="filtrKolumna" class="form-select">
       <option value="0">Nr zlecenia</option>
-      <option value="1">Adres inwestycji</option>
-      <option value="2">Data zlecenia</option>
-      <option value="3">Status</option>
-      <option value="4">Data wysłania</option>
-      <option value="5">Cena całkowita</option>
+      <option value="1">Handlowiec</option>
+      <option value="2">Adres inwestycji</option>
+      <option value="3">Data zlecenia</option>
+      <option value="4">Status</option>
+      <option value="5">Data wysłania</option>
+      <option value="6">Cena całkowita</option>
+      
     </select>
   </div>
   <div class="col-auto">
@@ -23,6 +25,7 @@
     <thead>
       <tr>
         <th>Nr zlecenia</th>
+        <th>Handlowiec</th>
         <th>Adres inwestycji</th>
         <th>Data zlecenia</th>
         <th>Status</th>
@@ -37,6 +40,7 @@
       {% for wycena in wyceny %}
       <tr data-id="{{ wycena.wycid }}">
         <td>{{ wycena.nr_zlecenia }}</td>
+        <td>{{ wycena.handlowiec.imie_nazwisko }}</td>
         <td>{{ wycena.adres_inwestycji }}</td>
         <td>{{ wycena.data_wprowadzenia }}</td>          
         <td>{{ wycena.status_wyceny }}</td>      

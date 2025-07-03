@@ -1,5 +1,5 @@
 {% extends "layout.html" %} {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/print.css') }}" media="print">
+<link rel="stylesheet" href="{{ url_for('static', filename='print.css') }}" media="print">
 <div class="container mb-3">
   <div class="d-flex justify-content-end mb-3">
   <button class="btn btn-outline-secondary d-print-none" onclick="window.print()">
@@ -51,7 +51,9 @@
     <div class="avoid-break">
         <h3>{{ sekcja }}: {{ podkategoria }}</h3>
     <!-- opis podkategorii -->
+     {% if szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.opis_kategorii != None %}
     <p>{{ szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.opis_kategorii }}</p>
+    {% endif %}
     <div class="row">
       <div class="col-auto">
         <img src="{{ url_for('static', filename=szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.zdjecie_url) }}"
@@ -93,10 +95,14 @@
 <!-- Podsumowanie wartosci kategorii -->
 
 <div class="row">
+  <div class="col"></div>
+  <div class="col"></div>
   <div class="col text-end">
 {% for kat, wartosc in wycena.wartosc_podsumowanie_kategorii.items() %}
   <p><strong>{{ kat }}:</strong> {{ wartosc|round(2) }} zł</p>
 {% endfor %}
+<hr>
+    <p><strong>Cena całkowita:</strong> {{ wycena.wartosc_calkowita|round(2) }} zł</p>
 
   </div>
 </div>
