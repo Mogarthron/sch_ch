@@ -78,6 +78,15 @@ class Handlowiec(Base):
 
     user = relationship("User", back_populates="handlowiec")
     wyceny = relationship("Wycena", back_populates="handlowiec", cascade="all, delete-orphan")
+
+    def __init__(self, user_id, nr_kontaktowy, email):
+        self.user_id = user_id
+        self.nr_kontaktowy = nr_kontaktowy
+        self.email = email
+
+    @property
+    def imie_nazwisko(self):
+        return f"{self.user.nazwisko} {self.user.imie}"
     
 
 class Kategorie_Wyceny(Base):
