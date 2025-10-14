@@ -126,7 +126,7 @@ class Kategorie_Wyceny(Base):
         """
         Zwraca słownik {"nazwa_kategorii": [lista podkategorii]}
         """
-        kategorie = session.query(cls.nazwa_kategorii, cls.pod_kategoria).all()
+        kategorie = session.query(cls.nazwa_kategorii, cls.pod_kategoria).filter(cls.nazwa_kategorii != "Paczki").all()
         wynik = {}
 
         for nazwa_kategorii, pod_kategoria in kategorie:
@@ -256,6 +256,11 @@ class Wycena(Base):
     def wartosc_calkowita(self):
 
         return sum(s.cena_calkowita or 0 for s in self.szczegoly)
+    
+    @property
+    def wartosc_calkowita_bez_paczek(self):
+
+        return sum(s.cena_calkowita or 0 for s in self.szczegoly if self.szczegoly.pozycje_wyceny.kategoria_wyceny.nazwa_kategorii != "Paczki")
     
     @property
     def wartosc_podsumowanie_kategorii(self):

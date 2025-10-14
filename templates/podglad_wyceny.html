@@ -56,11 +56,14 @@
     {% endif %}
     <div class="row">
       <div class="col-auto">
+        {% if szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.zdjecie_url %}
         <img src="{{ url_for('static', filename=szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.zdjecie_url) }}"
              alt="{{ podkategoria }}"
              class="rounded shadow-sm" 
-             width="190"
-             height="190"/>
+             width="150"
+             height="150"/>
+        
+        {% endif %}
       </div>
       <div class="col-8">
         <table class="table">
@@ -99,7 +102,9 @@
   <div class="col"></div>
   <div class="col text-end">
 {% for kat, wartosc in wycena.wartosc_podsumowanie_kategorii.items() %}
-  <p><strong>{{ kat }}:</strong> {{ wartosc|round(2) }} zł</p>
+    {% if kat != "Paczki" %}
+      <p><strong>{{ kat }}:</strong> {{ wartosc|round(2) }} zł</p>
+    {% endif %}
 {% endfor %}
 <hr>
     <p><strong>Cena całkowita:</strong> {{ wycena.wartosc_calkowita|round(2) }} zł</p>
