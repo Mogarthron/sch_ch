@@ -1,20 +1,43 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<h2><strong>Wycena nr {{ wycena.nr_zlecenia }}</strong></h2>
+<div class="row mb-4">
+  <div class="col"><h2><strong>Wycena nr {{ wycena.nr_wyceny }}</strong></h2></div>
+  <div class="col text-end">
+    <button
+      class="btn btn-warning"
+      id="edytuj_dane_wyceny"
+      data-wycid="{{ wycena.wycid }}"
+      data-imie="{{ wycena.imie_klienta }}"
+      data-nazwisko="{{ wycena.nazwisko_klienta }}"
+      data-ulica="{{ wycena.ulica }}"
+      data-nrdomu="{{ wycena.numer_domu }}"
+      data-kod="{{ wycena.kod_pocztowy }}"
+      data-miasto="{{ wycena.miasto }}"
+      data-tel="{{ wycena.kontakt_telefon }}"
+      data-email="{{ wycena.kontakt_email }}"
+      data-nr_zlecenia="{{ wycena.nr_zlecenia or '' }}"
+    >
+      Edytuj Dane Wyceny
+    </button>
+  </div>
+</div>
 
 <div class="row mb-4">
   <div class="col">
-    <p><strong>Klient:</strong> {{ wycena.imie_klienta }} {{ wycena.nazwisko_klienta }}</p>
-    <p><strong>Adres:</strong> {{ wycena.ulica }} {{ wycena.numer_domu }}, {{ wycena.kod_pocztowy }} {{ wycena.miasto }}</p>
-    <p><strong>Telefon:</strong> {{ wycena.kontakt_telefon }} | <strong>Email:</strong> {{ wycena.kontakt_email }}</p>
+    <p><strong>Klient:</strong> <span id="pole-klient">{{ wycena.imie_klienta }} {{ wycena.nazwisko_klienta }}</span></p>
+    <p><strong>Adres:</strong> <span id="pole-adres">{{ wycena.ulica }} {{ wycena.numer_domu }}, {{ wycena.kod_pocztowy }} {{ wycena.miasto }}</span></p>
+    <p><strong>Telefon:</strong> <span id="pole-tel">{{ wycena.kontakt_telefon }}</span> | <strong>Email:</strong> <span id="pole-email">{{ wycena.kontakt_email }}</span></p>
+    <p><strong>Nr zlecenia:</strong> <span id="pole-nr-zlecenia">{{ wycena.nr_zlecenia or "-" }}</span></p>
   </div>
   <div class="col text-end">
-    <p><strong>Data wystawienia:</strong> {{ wycena.data_wprowadzenia.strftime('%Y-%m-%d') }}</p>
+    <p><strong>Data wstawienia:</strong> {{ wycena.data_wprowadzenia.strftime('%Y-%m-%d') }}</p>
     <p><strong>Status:</strong> {{ wycena.status_wyceny }}</p>
     <p><strong>Wartość całkowita:</strong> {{ suma_wyceny | round(2) }} zł</p>
+    <p><strong>Wartość materiału:</strong> {{ suma_materialow | round(2) }} zł</p>
   </div>
 </div>
+
 
 <hr>
 <!-- Sekcje -->
@@ -58,6 +81,7 @@
           <th>Opis</th>
           <th>Ilość</th>
           <th>Cena</th>
+          <th>Materiał</th>
           <th></th>
           <th></th>
         </tr>
@@ -73,8 +97,15 @@
           <td>{{ szczegol.indywidualna_nazwa }}</td>
           {% endif %}
           <td>{{ szczegol.dodatkowy_opis }} </td>
-          <td>{{ szczegol.ilosc }} {{ szczegol.pozycja.jednostka_miary }}</td>
+          <td>
+            {% if szczegol.pozycja.jednostka_miary == "szt" %}
+              {{ szczegol.ilosc|int }} {{ szczegol.pozycja.jednostka_miary }}
+            {% else %}
+              {{ "%.2f"|format(szczegol.ilosc|float) }} {{ szczegol.pozycja.jednostka_miary }}
+            {% endif %}
+          </td>
           <td>{{ szczegol.cena_calkowita }} zł</td>
+          <td>{{ szczegol.cena_materialu }} zł</td>
           <td><button class="btn btn-warning" id="edit-{{ szczegol.szwycid }}">Edytuj</button></td>
           <td><button class="btn btn-danger" id="delate-{{ szczegol.szwycid }}">Usuń</button></td>
         </tr>        
@@ -87,7 +118,71 @@
   <hr>
 {% endfor %}
 
+<!-- Modal Edycji Danych Wyceny -->
+<div class="modal fade" id="modalEdycjaWyceny" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formularzEdycjiWyceny">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edytuj dane wyceny</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
 
+        <div class="modal-body">
+          <input type="hidden" name="wycid" id="ew_wycid">
+
+          <div class="row g-2">
+            <div class="col-md-6">
+              <label class="form-label">Imię</label>
+              <input type="text" class="form-control" name="imie_klienta" id="ew_imie" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Nazwisko</label>
+              <input type="text" class="form-control" name="nazwisko_klienta" id="ew_nazwisko" required>
+            </div>
+
+            <div class="col-md-8">
+              <label class="form-label">Ulica</label>
+              <input type="text" class="form-control" name="ulica" id="ew_ulica">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Nr domu</label>
+              <input type="text" class="form-control" name="numer_domu" id="ew_nrdomu">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Kod pocztowy</label>
+              <input type="text" class="form-control" name="kod_pocztowy" id="ew_kod" placeholder="00-000">
+            </div>
+            <div class="col-md-8">
+              <label class="form-label">Miasto</label>
+              <input type="text" class="form-control" name="miasto" id="ew_miasto">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Telefon</label>
+              <input type="text" class="form-control" name="kontakt_telefon" id="ew_tel">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" name="kontakt_email" id="ew_email">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Nr zlecenia</label>
+              <input type="text" class="form-control" name="nr_zlecenia" id="ew_nr_zlecenia" placeholder="np. PL6/25">
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+          <button type="submit" class="btn btn-primary">Zapisz</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
 
 <!-- Modal -->
 <div class="modal fade" id="dodajPozycjeModal" tabindex="-1" aria-hidden="true">
@@ -121,7 +216,7 @@
           <!-- Ilość -->
           <div class="mb-3">
             <label>Ilość</label>
-            <input type="number" name="ilosc" class="form-control" value="1" min="0", step="0.1">
+            <input type="number" name="ilosc" class="form-control" value="1" min="0", step="0.01">
           </div>
 
           <!-- Opis -->
@@ -141,6 +236,91 @@
 </div>
 
 <script>
+
+// === EDYCJA DANYCH WYCENY ===
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("edytuj_dane_wyceny");
+  const form = document.getElementById("formularzEdycjiWyceny");
+  const modalEl = document.getElementById("modalEdycjaWyceny");
+  const modal = new bootstrap.Modal(modalEl);
+
+  btn.addEventListener("click", () => {
+    // wypełnij pola z data-*
+    document.getElementById("ew_wycid").value = btn.dataset.wycid;
+    document.getElementById("ew_imie").value = btn.dataset.imie || "";
+    document.getElementById("ew_nazwisko").value = btn.dataset.nazwisko || "";
+    document.getElementById("ew_ulica").value = btn.dataset.ulica || "";
+    document.getElementById("ew_nrdomu").value = btn.dataset.nrdomu || "";
+    document.getElementById("ew_kod").value = btn.dataset.kod || "";
+    document.getElementById("ew_miasto").value = btn.dataset.miasto || "";
+    document.getElementById("ew_tel").value = btn.dataset.tel || "";
+    document.getElementById("ew_email").value = btn.dataset.email || "";
+    document.getElementById("ew_nr_zlecenia").value = btn.dataset.nr_zlecenia || "";
+
+    modal.show();
+  });
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const wycid = document.getElementById("ew_wycid").value;
+
+    const payload = {
+      imie_klienta: document.getElementById("ew_imie").value.trim(),
+      nazwisko_klienta: document.getElementById("ew_nazwisko").value.trim(),
+      ulica: document.getElementById("ew_ulica").value.trim(),
+      numer_domu: document.getElementById("ew_nrdomu").value.trim(),
+      kod_pocztowy: document.getElementById("ew_kod").value.trim(),
+      miasto: document.getElementById("ew_miasto").value.trim(),
+      kontakt_telefon: document.getElementById("ew_tel").value.trim(),
+      kontakt_email: document.getElementById("ew_email").value.trim(),
+      nr_zlecenia: document.getElementById("ew_nr_zlecenia").value.trim()
+    };
+
+    fetch(`/api/wycena/${wycid}/update`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success) {
+        alert("Błąd: " + (data.error || "nieznany"));
+        return;
+      }
+
+      // live update na stronie
+      document.getElementById("pole-klient").textContent = `${data.imie_klienta} ${data.nazwisko_klienta}`;
+      document.getElementById("pole-adres").textContent =
+        `${data.ulica} ${data.numer_domu}, ${data.kod_pocztowy} ${data.miasto}`;
+      document.getElementById("pole-tel").textContent = data.kontakt_telefon || "";
+      document.getElementById("pole-email").textContent = data.kontakt_email || "";
+      document.getElementById("pole-nr-zlecenia").textContent = data.nr_zlecenia || "-";
+
+      // zaktualizuj data-* przycisku, by przy kolejnym otwarciu były świeże
+      Object.assign(btn.dataset, {
+        imie: data.imie_klienta || "",
+        nazwisko: data.nazwisko_klienta || "",
+        ulica: data.ulica || "",
+        nrdomu: data.numer_domu || "",
+        kod: data.kod_pocztowy || "",
+        miasto: data.miasto || "",
+        tel: data.kontakt_telefon || "",
+        email: data.kontakt_email || "",
+        nr_zlecenia: data.nr_zlecenia || ""
+      });
+
+      modal.hide();
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Wystąpił błąd połączenia.");
+    });
+  });
+});
+
+
+
+
 function otworzModalDodajPozycje(button) {
   const row = button.closest(".row");
   const select = row.querySelector("select");
@@ -204,7 +384,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (button.textContent === "Edytuj") {
         const cells = row.querySelectorAll("td");
-        const [tdPozycja, tdIndNazwa, tdOpis, tdIlosc, tdCena] = cells;
+        const [tdPozycja, tdIndNazwa, tdOpis, tdIlosc, tdCena, tdMaterial] = cells;
 
         tdIndNazwa.innerHTML = `<input type="text" class="form-control" value="${tdIndNazwa.textContent.trim()}">`;
         tdOpis.innerHTML = `<input type="text" class="form-control" value="${tdOpis.textContent.trim()}">`;
@@ -212,6 +392,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tdIlosc.innerHTML = `<input type="number" class="form-control" value="${ilosc}" step="0.01" min="0">`;
         const cena = tdCena.textContent.trim().replace(" zł", "");
         tdCena.innerHTML = `<input type="number" class="form-control" value="${cena}" step="0.01" min="0">`;
+        const material = tdMaterial.textContent.trim().replace(" zł", "");
+        tdMaterial.innerHTML = `<input type="number" class="form-control" value="${material}" step="0.01" min="0">`;
 
         button.textContent = "Zatwierdź";
         button.classList.remove("btn-warning");
@@ -221,6 +403,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const tdOpis = row.querySelector("td:nth-child(3) input").value;
         const tdIlosc = row.querySelector("td:nth-child(4) input").value;
         const tdCena = row.querySelector("td:nth-child(5) input").value;
+        const tdMaterial = row.querySelector("td:nth-child(6) input").value;
 
         fetch("/api/szczegoly_wyceny/update", {
           method: "POST",
@@ -232,7 +415,8 @@ document.addEventListener("DOMContentLoaded", () => {
             indywidualna_nazwa: tdIndNazwa,
             dodatkowy_opis: tdOpis,
             ilosc: parseFloat(tdIlosc),
-            cena_calkowita: parseFloat(tdCena)
+            cena_calkowita: parseFloat(tdCena),
+            cena_materialu: parseFloat(tdMaterial)
           })
         })
         .then(res => res.json())
@@ -242,6 +426,7 @@ document.addEventListener("DOMContentLoaded", () => {
             row.querySelector("td:nth-child(3)").textContent = tdOpis;
             row.querySelector("td:nth-child(4)").textContent = `${tdIlosc} ${data.jednostka}`;
             row.querySelector("td:nth-child(5)").textContent = `${parseFloat(tdCena).toFixed(2)} zł`;
+            row.querySelector("td:nth-child(6)").textContent = `${parseFloat(tdMaterial).toFixed(2)} zł`;
 
             button.textContent = "Edytuj";
             button.classList.remove("btn-success");

@@ -62,15 +62,18 @@ document.querySelectorAll(".edytuj").forEach(btn => {
 
     const pozycjaTd = row.querySelector(".pozycja");
     const cenaTd = row.querySelector(".cena");
+    const materialTd = row.querySelector(".cena_mat");
     const miaraTd = row.querySelector(".miara");
 
     if (this.textContent === "Edytuj") {
       const pozycja = pozycjaTd.textContent.trim();
       const cena = cenaTd.textContent.trim();
+      const material = cenaTd.textContent.trim();
       const miara = miaraTd.textContent.trim();
 
       pozycjaTd.innerHTML = `<input type="text" class="form-control" value="${pozycja}">`;
       cenaTd.innerHTML = `<input type="number" step="0.01" class="form-control" value="${cena}">`;
+      materialTd.innerHTML = `<input type="number" step="0.01" class="form-control" value="${material}">`;
       miaraTd.innerHTML = `<input type="text" class="form-control" value="${miara}">`;
 
       this.textContent = "Zapisz";
@@ -79,6 +82,7 @@ document.querySelectorAll(".edytuj").forEach(btn => {
     } else if (this.textContent === "Zapisz") {
       const nowaPozycja = pozycjaTd.querySelector("input").value;
       const nowaCena = cenaTd.querySelector("input").value;
+      const nowaMaterial = cenaTd.querySelector("input").value;
       const nowaMiara = miaraTd.querySelector("input").value;
 
       fetch("/edytuj_pozycje_wyceny", {
@@ -88,6 +92,7 @@ document.querySelectorAll(".edytuj").forEach(btn => {
           cid: id,
           pozycja: nowaPozycja,
           cena_jednostkowa: nowaCena,
+          cena_materialu: nowaMaterial,
           jednostka_miary: nowaMiara
         })
       })
@@ -97,6 +102,7 @@ document.querySelectorAll(".edytuj").forEach(btn => {
           // Aktualizuj wiersz
           pozycjaTd.textContent = nowaPozycja;
           cenaTd.textContent = parseFloat(nowaCena).toFixed(2);
+          materialTd.textContent = parseFloat(nowaMaterial).toFixed(2);
           miaraTd.textContent = nowaMiara;
 
           this.textContent = "Edytuj";

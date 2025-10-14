@@ -198,3 +198,4 @@ alembic
 alembic.ini
 static/zdjecia
 static/pdf
+.vscode

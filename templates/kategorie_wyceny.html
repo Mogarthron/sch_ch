@@ -3,8 +3,17 @@
 {% block content %}
 <h2>Kategorie wyceny</h2>
 
+<div class="d-flex justify-content-between align-items-center mb-3 gap-2">
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dodajModal">
+    Dodaj Pozycje Wyceny
+  </button>
 
-<button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#dodajModal">Dodaj Pozycje Wyceny</button>
+  <div class="input-group" style="max-width: 360px;">
+    <span class="input-group-text" id="filterLabel">Szukaj</span>
+    <input id="filterInput" type="text" class="form-control" placeholder="Filtruj całą tabelę…" aria-labelledby="filterLabel">
+    <button id="filterClear" class="btn btn-outline-secondary" type="button" title="Wyczyść">×</button>
+  </div>
+</div>
 
 <table class="table table-bordered">
   <thead>
@@ -12,6 +21,7 @@
       <th>Typ kategorii</th>
       <th>Nazwa</th>
       <th>Opis</th>
+      <th>Widoczne dla klienta</th>
       <th>URL zdjecie</th>
       <th>Akcje</th>
     </tr>
@@ -22,9 +32,12 @@
         <td class="nazwa">{{ kat.nazwa_kategorii }}</td>
         <td class="kategoria">{{ kat.pod_kategoria }}</td>
       <td class="opis">{{ kat.opis_kategorii }}</td>
+      <td class="widoczne"data-bool="{{ 1 if kat.wycena_klienta else 0 }}">
+  {{ "Tak" if kat.wycena_klienta else "Nie" }}</td>
       <td class="zdjecie">{{ kat.zdjecie_url }}</td>
       <td>
-        <button class="btn btn-warning btn-sm edytuj">Edytuj</button>
+        <button class="btn btn-warning btn-sm me-2 edytuj">Edytuj</button>
+        <button class="btn btn-danger btn-sm usun">Usuń</button>
       </td>
     </tr>
     {% endfor %}

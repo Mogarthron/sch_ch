@@ -1,0 +1,321 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+/* estetyka + druk */
+.summary-card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; }
+.summary-grid { display:grid; grid-template-columns: 1fr 160px 160px; gap:8px; align-items:center; }
+.summary-grid > div { padding:6px 8px; }
+.summary-head { font-weight:700; background:#f8fafc; border-bottom:1px solid #e5e7eb; }
+.summary-row:nth-child(even) { background:#fafafa; }
+.text-end { text-align:right; }
+.badge { display:inline-block; padding:2px 8px; border-radius:999px; background:#eef2ff; }
+@media print {
+  .no-print { display:none !important; }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .summary-card { border:0; padding:0; }
+}
+/* LISTA POZYCJI ZGRUPOWANYCH WG KATEGORII */
+  .items-card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:12px; margin-bottom:16px; }
+  .items-table { width:100%; border-collapse:collapse; }
+  .items-table th, .items-table td { border-bottom:1px solid #e5e7eb; padding:6px 8px; font-size:0.95rem; }
+  .items-table thead th { background:#f8fafc; font-weight:700; }
+  .group-row { background:#eef2ff; font-weight:700; border-top:2px solid #c7d2fe; }
+  .subtotal-row { background:#fafafa; font-weight:600; }
+  .text-end { text-align:right; }
+
+  /* @media print {
+    .items-card { border:0; padding:0; margin-bottom:8px; }
+    .items-table th, .items-table td { padding:4px 6px; }
+    .group-row { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  } */
+@media print {
+  /* sekcja podsumowania */
+  .summary-grid > div {
+    white-space: nowrap;   /* nie zawija tekstu */
+    overflow: hidden;      /* obetnie nadmiar (opcjonalnie) */
+    text-overflow: ellipsis; /* albo "..." na końcu jeśli się nie mieści */
+  }
+
+  .summary-grid {
+    table-layout: fixed;
+    width: 100%;
+  }
+}
+  
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3 no-print">
+  <div>
+    <button class="btn btn-outline-secondary" onclick="window.history.back()">Wróć</button>
+    <button class="btn btn-primary" onclick="window.print()">Drukuj</button>
+  </div>
+</div>
+
+<div class="mb-3">
+  {% if wycena.nr_zlecenia == None %}
+  <h2 class="m-0">{{ wycena.nazwisko_klienta }} {{ wycena.adres_inwestycji }}</h2>
+  {% else %}
+  <h2 class="m-0">NR zlecenia: {{ wycena.nr_zlecenia }}</h2>
+  {% endif %}
+</div>
+
+
+<div class="items-card">
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th style="width:40%;">Produkt</th>
+        <th class="text-end" style="width:10%;">Ilość</th>
+        <th class="text-end" style="width:12%;">Cena jedn.</th>
+        <th class="text-end" style="width:12%;">Cena mat.</th>
+        <th style="width:8%;">Jedn.</th>
+        <th class="text-end" style="width:10%;">Cena jednostkowa</th>
+        <th class="text-end" style="width:8%;">Cena materiału</th>
+      </tr>
+    </thead>
+    <tbody>
+
+
+ 
+{% set priorytety = {
+  "Typ Schodów": 1,
+  "Balustrady": 2,
+  "Wykończenie stropu pod balustradą": 3,
+  "Dopłaty": 4,
+  "Paczki": 5,
+  "Inne": 99
+} %}
+{% set order = ["Typ Schodów", "Balustrady", "Wykończenie stropu pod balustradą", "Dopłaty", "Paczki"] %}
+
+{# Zgrupuj raz, potem wykorzystuj wielokrotnie #}
+{% set grouped = szczegoly | groupby('pozycja.kategoria_wyceny.nazwa_kategorii') %}
+
+
+{% for desired in order %}
+  {% for g in grouped if (g.grouper if g.grouper is not none else "Inne") == desired %}
+    {% set kat = g.grouper %}
+    {% set kategoria = kat if kat is not none else "Inne" %}
+
+    <tr class="group-row">
+      {% if kategoria == "Typ Schodów" %}
+        <td colspan="7">{{ wycena.typ_schodow }}</td>
+      {% else %}
+        <td colspan="7">{{ kategoria }}</td>
+      {% endif %}
+    </tr>
+
+    {% set _cena = 0.0 %}
+    {% set _mat  = 0.0 %}
+
+    {% for s in g.list %}
+      {% set nazwa = s.indywidualna_nazwa or (s.pozycja.pozycja if s.pozycja else "Pozycja") %}
+      {% set jedn = s.pozycja.jednostka_miary if s.pozycja else "" %}
+      {% set ilosc = s.ilosc|float %}
+      {% set cj = (s.pozycja.cena_jednostkowa if s.pozycja else 0)|float %}
+      {% set cm = (s.pozycja.cena_materialu if s.pozycja else 0)|float %}
+      {% set cena = (s.cena_calkowita or 0)|float %}
+      {% set mat = (s.cena_materialu or 0)|float %}
+
+      {% set _cena = _cena + cena %}
+      {% set _mat  = _mat + mat %}
+
+      <tr>
+        <td>{{ nazwa }}
+          {% if s.dodatkowy_opis %}<div class="text-muted" style="font-size:.85em;">{{ s.dodatkowy_opis }}</div>{% endif %}
+        </td>
+        <td class="text-end">
+          {% if jedn == "szt" or jedn == "kpl" %}
+            {{ ilosc|int }}
+          {% else %}
+            {{ "%.2f"|format(ilosc) }}
+          {% endif %}
+        </td>
+        <td class="text-end">{{ "%.2f"|format(cj) }}</td>
+        <td class="text-end">{{ "%.2f"|format(cm) }}</td>
+        <td>{{ jedn }}</td>
+        <td class="text-end">{{ "%.2f"|format(cena) }}</td>
+        <td class="text-end">{{ "%.2f"|format(mat) }}</td>
+      </tr>
+    {% endfor %}
+  {% endfor %}
+{% endfor %}
+
+{# --- 2) Pozostałe kategorie (nie w order), alfabetycznie --- #}
+{% for g in grouped | sort(attribute='grouper') %}
+  {% if g.grouper is not none and g.grouper not in order %}
+    {% set kat = g.grouper %}
+    {% set kategoria = kat %}
+
+    <tr class="group-row">
+      <td colspan="7">{{ kategoria }}</td>
+    </tr>
+
+    {% set _cena = 0.0 %}
+    {% set _mat  = 0.0 %}
+
+    {% for s in g.list %}
+      {% set nazwa = s.indywidualna_nazwa or (s.pozycja.pozycja if s.pozycja else "Pozycja") %}
+      {% set jedn = s.pozycja.jednostka_miary if s.pozycja else "" %}
+      {% set ilosc = s.ilosc|float %}
+      {% set cj = (s.pozycja.cena_jednostkowa if s.pozycja else 0)|float %}
+      {% set cm = (s.pozycja.cena_materialu if s.pozycja else 0)|float %}
+      {% set cena = (s.cena_calkowita or 0)|float %}
+      {% set mat = (s.cena_materialu or 0)|float %}
+
+      {% set _cena = _cena + cena %}
+      {% set _mat  = _mat + mat %}
+
+      <tr>
+        <td>{{ nazwa }}
+          {% if s.dodatkowy_opis %}<div class="text-muted" style="font-size:.85em;">{{ s.dodatkowy_opis }}</div>{% endif %}
+        </td>
+        <td class="text-end">
+          {% if jedn == "szt" or jedn == "kpl" %}
+            {{ ilosc|int }}
+          {% else %}
+            {{ "%.2f"|format(ilosc) }}
+          {% endif %}
+        </td>
+        <td class="text-end">{{ "%.2f"|format(cj) }}</td>
+        <td class="text-end">{{ "%.2f"|format(cm) }}</td>
+        <td>{{ jedn }}</td>
+        <td class="text-end">{{ "%.2f"|format(cena) }}</td>
+        <td class="text-end">{{ "%.2f"|format(mat) }}</td>
+      </tr>
+    {% endfor %}
+  {% endif %}
+{% endfor %}
+
+{# --- 3) Na końcu kategoria "Inne" (grouper == None) --- #}
+{% for g in grouped %}
+  {% if g.grouper is none %}
+    {% set kategoria = "Inne" %}
+
+    <tr class="group-row">
+      <td colspan="7">{{ kategoria }}</td>
+    </tr>
+
+    {% set _cena = 0.0 %}
+    {% set _mat  = 0.0 %}
+
+    {% for s in g.list %}
+      {% set nazwa = s.indywidualna_nazwa or (s.pozycja.pozycja if s.pozycja else "Pozycja") %}
+      {% set jedn = s.pozycja.jednostka_miary if s.pozycja else "" %}
+      {% set ilosc = s.ilosc|float %}
+      {% set cj = (s.pozycja.cena_jednostkowa if s.pozycja else 0)|float %}
+      {% set cm = (s.pozycja.cena_materialu if s.pozycja else 0)|float %}
+      {% set cena = (s.cena_calkowita or 0)|float %}
+      {% set mat = (s.cena_materialu or 0)|float %}
+
+      {% set _cena = _cena + cena %}
+      {% set _mat  = _mat + mat %}
+
+      <tr>
+        <td>{{ nazwa }}
+          {% if s.dodatkowy_opis %}<div class="text-muted" style="font-size:.85em;">{{ s.dodatkowy_opis }}</div>{% endif %}
+        </td>
+        <td class="text-end">
+          {% if jedn == "szt" or jedn == "kpl" %}
+            {{ ilosc|int }}
+          {% else %}
+            {{ "%.2f"|format(ilosc) }}
+          {% endif %}
+        </td>
+        <td class="text-end">{{ "%.2f"|format(cj) }}</td>
+        <td class="text-end">{{ "%.2f"|format(cm) }}</td>
+        <td>{{ jedn }}</td>
+        <td class="text-end">{{ "%.2f"|format(cena) }}</td>
+        <td class="text-end">{{ "%.2f"|format(mat) }}</td>
+      </tr>
+    {% endfor %}
+  {% endif %}
+{% endfor %}
+
+    </tbody>
+  </table>
+</div>
+
+
+
+<div class="summary-card">
+  <div class="summary-grid">
+    <div class="summary-head">Pozycja</div>
+    <div class="summary-head text-end">Cena</div>
+    <div class="summary-head text-end">Materiał</div>
+
+    <!-- Schody -->
+    <div class="summary-row"><strong>Wartość schodów łącznie</strong></div>
+    <div class="summary-row text-end"><strong>{{ "%0.2f"|format(s.schody.cena) }} zł</strong></div>
+    <div class="summary-row text-end"><strong>{{ "%0.2f"|format(s.schody.material) }} zł</strong></div>
+
+    <!-- Balustrady -->
+    <div class="summary-row"><strong>Wartość balustrad łącznie</strong></div>
+    <div class="summary-row text-end"><strong>{{ "%0.2f"|format(s.balustrady.cena) }} zł</strong></div>
+    <div class="summary-row text-end"><strong>{{ "%0.2f"|format(s.balustrady.material) }} zł</strong></div>
+
+    <!-- Łącznie -->
+    <div class="summary-row">Łączna kwota</div>
+    <div class="summary-row text-end">{{ "%0.2f"|format(s.suma.cena) }} zł</div>
+    <div class="summary-row text-end">{{ "%0.2f"|format(s.suma.material) }} zł</div>
+
+    <!-- Rabat (edycyjny) -->
+    <!-- <div class="summary-row no-print">
+      Rabat
+      <small class="text-muted">(wpisz % lub kwotę ↓)</small>
+      <div class="mt-1">
+        <input id="rabatProc" type="number" class="form-control form-control-sm" placeholder="%"
+               style="max-width:100px; display:inline-block;">
+        <input id="rabatKwota" type="number" class="form-control form-control-sm ms-1" placeholder="kwota"
+               style="max-width:140px; display:inline-block;">
+      </div>
+    </div>
+    <div class="summary-row text-end" id="rabat-cena">0.00 zł</div>
+    <div class="summary-row text-end" id="rabat-mat"></div> -->
+
+    <!-- Po rabacie (netto) -->
+    <!-- <div class="summary-row"><strong>Kwota po rabacie (netto)</strong></div>
+    <div class="summary-row text-end" id="netto-cena"><strong>{{ "%0.2f"|format(s.suma.cena) }} zł</strong></div>
+    <div class="summary-row text-end" id="netto-mat"></strong></div> -->
+
+    <!-- VAT -->
+    <div class="summary-row">
+      VAT 8%
+    </div>
+    <div class="summary-row text-end" id="vat-cena">0.00 zł</div>
+    <div class="summary-row text-end" id="vat-mat"></div>
+
+    <!-- Brutto -->
+    <div class="summary-row"><strong>Kwota brutto</strong></div>
+    <div class="summary-row text-end" id="brutto-cena"><strong>{{ "%0.2f"|format(s.suma.cena) }} zł</strong></div>
+    <div class="summary-row text-end" id="brutto-mat"><strong></strong></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // wartości startowe z serwera
+  const sumaCena = {{ s.suma.cena|default(0)|float }};
+  const sumaMat  = {{ s.suma.material|default(0)|float }};
+
+  const fmt = v => (Number(v)||0).toFixed(2) + " zł";
+  const VAT = 0.08; 
+
+  const nettoCena = Math.max(sumaCena, 0);
+  const nettoMat  = Math.max(sumaMat, 0);
+
+  const vatCena   = nettoCena * VAT;
+  // const vatMat    = nettoMat * VAT;
+
+  const bruttoCena = nettoCena + vatCena;
+  // const bruttoMat  = nettoMat + vatMat;
+
+  document.getElementById("vat-cena").textContent    = fmt(vatCena);
+  // document.getElementById("vat-mat").textContent     = fmt(vatMat);
+  document.getElementById("brutto-cena").textContent = fmt(bruttoCena);
+  // document.getElementById("brutto-mat").textContent  = fmt(bruttoMat);
+})();
+
+</script>
+
+{% endblock %}

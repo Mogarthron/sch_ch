@@ -4,10 +4,10 @@
   <div class="row mb-3">
   <div class="col-auto">
     <select id="filtrKolumna" class="form-select">
-      <option value="0">Nr zlecenia</option>
+      <option value="0">Nr wyceny</option>
       <option value="1">Handlowiec</option>
       <option value="2">Adres inwestycji</option>
-      <option value="3">Data zlecenia</option>
+      <option value="3">Data wyceny</option>
       <option value="4">Status</option>
       <option value="5">Data wysłania</option>
       <option value="6">Cena całkowita</option>
@@ -24,12 +24,14 @@
   <table class="table table-bordered">
     <thead>
       <tr>
+        <th>Nr wyceny</th>
         <th>Nr zlecenia</th>
         <th>Handlowiec</th>
         <th>Adres inwestycji</th>
-        <th>Data zlecenia</th>
+        <th>Data wyceny</th>
         <th>Status</th>
         <th>Data wysłania</th>
+        <th>Monday ID</th>
         <th>Cena całkowita</th>
         <th></th>
         <th></th>
@@ -39,17 +41,23 @@
     <tbody>
       {% for wycena in wyceny %}
       <tr data-id="{{ wycena.wycid }}">
+        <td>{{ wycena.nr_wyceny }}</td>
         <td>{{ wycena.nr_zlecenia }}</td>
         <td>{{ wycena.handlowiec.imie_nazwisko }}</td>
         <td>{{ wycena.adres_inwestycji }}</td>
-        <td>{{ wycena.data_wprowadzenia }}</td>          
+        <td>{{ wycena.data_wprowadzenia.strftime("%Y-%m-%d") }}</td>          
         <td>{{ wycena.status_wyceny }}</td>      
         {% if wycena.data_wyslania == None and wycena.wartosc_calkowita == 0 %}
         <td><button type="button" class="btn btn-warning" disabled>Wyślij</button></td>
         {% elif wycena.data_wyslania == None and wycena.wartosc_calkowita > 0 %}
-        <td><button type="button" class="btn btn-warning wyslij" data-nr="{{ wycena.nr_zlecenia }}">Wyślij</button></td>
+        <td><button type="button" class="btn btn-warning wyslij" data-nr="{{ wycena.nr_wyceny }}">Wyślij</button></td>
         {% else %}
-        <td>{{ wycena.data_wyslania }}</td>
+        <td>{{ wycena.data_wyslania.strftime("%Y-%m-%d") }}</td>
+        {% endif %}
+        {% if wycena.id_monday == None %}
+        <td><button type="button" class="btn btn-warning wyslij-do-monday" data-nr="{{ wycena.nr_wyceny }}">Wyślij do Monday</button></td>
+        {% else %}
+        <td>{{ wycena.id_monday }}</td>
         {% endif %}
         <td>{{ wycena.wartosc_calkowita }}</td>
        
@@ -61,7 +69,7 @@
         </td>
 
         <td>
-          <a href="{{url_for('podglad_wyceny', wycid=wycena.wycid)}}" class="btn btn-primary">Podgląd wyceny</a>
+          <a href="{{url_for('podsumowanie_widok', wycid=wycena.wycid)}}" class="btn btn-primary">Podgląd wyceny</a>
         </td>
 
       </tr>
@@ -86,6 +94,29 @@ document.querySelectorAll(".wyslij").forEach(button => {
     .then(data => {
       if (data.success) {
         td.textContent = data.data_wyslania;  // ← nowa data zamiast przycisku
+      } else {
+        alert("Błąd: " + data.error);
+      }
+    });
+  });
+});
+
+document.querySelectorAll(".wyslij-do-monday").forEach(button => {
+  button.addEventListener("click", function () {
+    const nrZlecenia = this.dataset.nr;
+    const td = this.closest("td");
+
+    fetch("/wyslano_do_monday", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ nr_wyceny: nrZlecenia })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        td.textContent = "Wysłano do monday";
       } else {
         alert("Błąd: " + data.error);
       }
