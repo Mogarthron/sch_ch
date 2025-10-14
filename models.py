@@ -26,6 +26,7 @@ class User(Base, UserMixin):
     nazwisko = Column(String(128), nullable=False)
     rola = Column(String(68), nullable=False)
     haslo_hash = Column(String(128), nullable=False)
+    monday_api = Column(String, default=None)
     aktywny = Column(Boolean, default=True)
 
     handlowiec = relationship("Handlowiec", back_populates="user", cascade="all, delete-orphan", uselist=False)
@@ -49,6 +50,9 @@ class User(Base, UserMixin):
     def dezaktywoj_usera(self):
         if self.aktywny:
             self.aktywny = False
+
+    def dodaj_monday_api(self, api):
+        self.monday_api = api
 
     @classmethod
     def from_form(cls, form, session):
@@ -97,6 +101,7 @@ class Kategorie_Wyceny(Base):
     pod_kategoria = Column(String(128), nullable=False) #np. schody policzkowe, schody grzebieniowe, tralka 15
     opis_kategorii = Column(String(256))
     zdjecie_url = Column(String(256))
+    wycena_klienta = Column(Boolean, default=True) #czy wyświetlać kategorię w wycenie dla klienta
 
     pozycje_wyceny = relationship("Pozycje_Wyceny", back_populates="kategoria_wyceny", cascade="all, delete-orphan")
     
@@ -134,9 +139,10 @@ class Pozycje_Wyceny(Base):
     __tablename__ = "pozycje_wyceny"
 
     cid = Column(Integer, primary_key=True)
-    kategoria_id = Column(Integer, ForeignKey('kategorie_wyceny.katid'), nullable=False) # Typ schodó, balustrada itd
+    kategoria_id = Column(Integer, ForeignKey('kategorie_wyceny.katid'), nullable=False) # Typ schodów, balustrada itd
     pozycja = Column(String(128), nullable=False)
     cena_jednostkowa = Column(Numeric(10,2))
+    cena_materialu = Column(Numeric(10,2))
     jednostka_miary = Column(String(16))
     data_wprowadzenia = Column(DateTime, default=dt.now)
     data_edycji = Column(DateTime, default=dt.now, onupdate=dt.now)
@@ -145,10 +151,11 @@ class Pozycje_Wyceny(Base):
     
     
 
-    def __init__(self, kategoria_id:int, pozycja, cena_jednostkowa, jednostka_miary):
+    def __init__(self, kategoria_id:int, pozycja, cena_jednostkowa, jednostka_miary, cena_materialu=0):
         self.kategoria_id = kategoria_id
         self.pozycja = pozycja
         self.cena_jednostkowa = cena_jednostkowa
+        self.cena_materialu = cena_materialu
         self.jednostka_miary = jednostka_miary
       
     @classmethod
@@ -158,6 +165,7 @@ class Pozycje_Wyceny(Base):
             kategoria_id = kategoria_id,
             pozycja = form.get("pozycja"),
             cena_jednostkowa = form.get("cena_jednostkowa"),
+            cena_materialu = form.get("cena_matrerialu"),
             jednostka_miary = form.get("jednostka_miary"),
         )
 
@@ -175,7 +183,9 @@ class Wycena(Base):
     handlowiec_id = Column(Integer, ForeignKey('handlowiec.handlowiec_id'), nullable=True)
     rok = Column(Integer)
     kolejny_numer = Column(Integer)
-    nr_zlecenia = Column(String(64), nullable=False, unique=True)
+    nr_zlecenia = Column(String(10)) #nr wewnetrzny wyceny np.: PL6/25, GD15/25
+    nr_wyceny = Column(String(64), nullable=False, unique=True)
+    id_monday = Column(Integer, default=None)
     imie_klienta = Column(String(128), nullable=False)
     nazwisko_klienta = Column(String(128), nullable=False)
     data_wprowadzenia = Column(DateTime, default=dt.now)
@@ -202,7 +212,7 @@ class Wycena(Base):
         ostatni_numer = session.query(Wycena.kolejny_numer).filter(Wycena.rok == self.rok).order_by(Wycena.kolejny_numer.desc()).first() #type: ignore
 
         self.kolejny_numer = (ostatni_numer[0] + 1) if ostatni_numer else 1
-        self.nr_zlecenia = f"{self.rok}_{self.kolejny_numer:03d}"
+        self.nr_wyceny = f"{self.rok}_{self.kolejny_numer:03d}"
 
         # Dane z formularza
         self.imie_klienta = form.get("imie_klienta")
@@ -215,6 +225,27 @@ class Wycena(Base):
         self.kontakt_telefon = form.get("kontakt_telefon")
         self.kontakt_email = form.get("kontakt_email")
         self.dodatkowe_uwagi = form.get("dodatkowe_uwagi")
+
+    @property
+    def typ_schodow(self) -> str | None:
+        """
+        Zwraca podkategorię z Kategorie_Wyceny dla pozycji należącej do kategorii 'Typ Schodów'.
+        Jeśli brak takiej pozycji, zwraca None.
+        """
+        KAT_TYP_SCHODOW = "Typ Schodów"
+
+        for s in self.szczegoly:
+            pozycja = getattr(s, "pozycja", None)
+            if not pozycja:
+                continue
+
+            kat = getattr(pozycja, "kategoria_wyceny", None)
+            if kat and kat.nazwa_kategorii == KAT_TYP_SCHODOW:
+                return kat.pod_kategoria
+
+        return None
+        
+
 
     @property
     def adres_inwestycji(self):
@@ -275,6 +306,48 @@ class Wycena(Base):
         self.kontakt_email = form.get("kontakt_email")
         self.dodatkowe_uwagi = form.get("dodatkowe_uwagi")
 
+    def aktualizuj_id_monday(self, id_monday:int):
+
+        self.id_monday = id_monday
+
+    def podsumowanie_wyceny(self):
+        """
+        Zwraca słownik z sumami dla 'schodów' i 'balustrad' (cena + materiał)
+        oraz sumę łączną.
+        """
+        SCHODY = {"Typ Schodów", "Dopłaty"}
+        BALUSTRADY = {"Balustrady", "Wykończenie stropu pod balustradą", "Inne dopłaty do balustrady"}
+
+        # sumy per kategoria
+        per_cat = defaultdict(lambda: {"cena": 0.0, "material": 0.0})
+
+        for s in self.szczegoly:
+            # ustal nazwę kategorii
+            if s.pozycja and s.pozycja.kategoria_wyceny:
+                k = s.pozycja.kategoria_wyceny.nazwa_kategorii
+            else:
+                k = "Inne"
+
+            per_cat[k]["cena"] += float(s.cena_calkowita or 0)
+            per_cat[k]["material"] += float(s.cena_materialu or 0)
+
+        # zsumuj wg kluczy
+        schody_cena = sum(per_cat[k]["cena"] for k in SCHODY if k in per_cat)
+        schody_mat  = sum(per_cat[k]["material"] for k in SCHODY if k in per_cat)
+
+        bal_cena = sum(per_cat[k]["cena"] for k in BALUSTRADY if k in per_cat)
+        bal_mat  = sum(per_cat[k]["material"] for k in BALUSTRADY if k in per_cat)
+
+        suma_cena = schody_cena + bal_cena
+        suma_mat  = schody_mat  + bal_mat
+
+        return {
+            "per_cat": dict(per_cat),
+            "schody": {"cena": round(schody_cena, 2), "material": round(schody_mat, 2)},
+            "balustrady": {"cena": round(bal_cena, 2), "material": round(bal_mat, 2)},
+            "suma": {"cena": round(suma_cena, 2), "material": round(suma_mat, 2)},
+        }
+
 class Szczegoly_Wyceny(Base):
     __tablename__ = "szczegoly_wyceny"
 
@@ -283,6 +356,7 @@ class Szczegoly_Wyceny(Base):
     pozid = Column(Integer, ForeignKey("pozycje_wyceny.cid"), nullable=True)
     ilosc = Column(Numeric(10,4), default=0.0)
     cena_calkowita = Column(Numeric(10,2), default=0.0) #pozycje_wyceny.cena_jednostkowa x ilosc lub możliwosc wpisania z palca
+    cena_materialu = Column(Numeric(10,2), default=0.0) #analogicnie do ceny całkowitej
     indywidualna_nazwa = Column(String(128), default=None) #dodawany w wyjatkowych sytuacjach gdy wiersz nie jest powiązany z pozycje wyceny
     dodatkowy_opis = Column(String(256))
     data_wprowadzenia = Column(DateTime, default=dt.now)
@@ -295,20 +369,23 @@ class Szczegoly_Wyceny(Base):
         self.wycid = wycid
         self.pozid = form.get("pozid")  # może być None
         self.ilosc = float(form.get("ilosc", 0)) or float(0)
+
         if form.get("indywidualna_nazwa"):
             self.indywidualna_nazwa = form.get("wybrana_wartosc") or None
         self.dodatkowy_opis = form.get("dodatkowy_opis")
 
-        # Jeśli powiązana pozycja istnieje – pobierz cenę jednostkową
         if self.pozid:
             pozycja = session.query(Pozycje_Wyceny).filter_by(cid=self.pozid).first()
             if pozycja:
-                self.cena_calkowita = round(self.ilosc * float(pozycja.cena_jednostkowa), 2)
+                self.cena_calkowita = round(self.ilosc * float(pozycja.cena_jednostkowa or 0), 2)
+                self.cena_materialu = round(self.ilosc * float(pozycja.cena_materialu or 0), 2)
             else:
                 self.cena_calkowita = float(0)
+                self.cena_materialu = float(0)
         else:
-            
             self.cena_calkowita = float(0)
+            self.cena_materialu = float(0)
+
 
 
 class Oferta(Base):

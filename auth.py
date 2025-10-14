@@ -77,6 +77,7 @@ def edytuj_uzytkownika(user_id):
         user.imie = request.form.get("imie")
         user.nazwisko = request.form.get("nazwisko")
         user.rola = request.form.get("rola")
+        user.monday_api = request.form.get("monday_api")
 
         if request.form.get("haslo"):
             user.set_password(request.form.get("haslo"))

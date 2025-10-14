@@ -53,6 +53,7 @@ def edytuj_pozycje_wyceny():
 
         poz.pozycja = dane["pozycja"]
         poz.cena_jednostkowa = dane["cena_jednostkowa"]
+        poz.cena_materialu = dane["cena_materialu"]
         poz.jednostka_miary = dane["jednostka_miary"]
         session.commit()
 
