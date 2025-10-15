@@ -1,0 +1,119 @@
+{% extends "layout.html" %} {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='print.css') }}" media="print">
+<div class="container mb-3">
+  <div class="d-flex justify-content-end mb-3">
+  <button class="btn btn-outline-secondary d-print-none" onclick="window.print()">
+    Drukuj ofertę z przeglądarki
+  </button>
+  </div>  
+  
+  <div class="row mb-3">
+    <div class="col text-center">
+
+      <img
+        src="{{ url_for('static', filename='schody-chudzinski-logo.png') }}"        
+        alt="LOGO"
+      />
+      
+    </div>
+
+  </div>
+
+
+  <div class="row mb-3">
+    
+    <div class="col">
+      <p><strong>Oferta wystawiona przez:</strong> 
+        {{ wycena.dane_handlowca["imie"] }} {{ wycena.dane_handlowca["nazwisko"] }}<br>
+        <strong>Email kontaktowy:</strong> {{ wycena.dane_handlowca["email"] }}<br>
+        <strong>Telefon kontakowy:</strong> {{ wycena.dane_handlowca["nr_kontaktowy"] }}
+      </p>
+    </div>
+    <div class="col text-end">
+      <p>dla P. {{ wycena.imie_klienta}} {{ wycena.nazwisko_klienta }}</p>
+      <p>Data wystawienia: {{ wycena.data_wprowadzenia.strftime('%Y-%m-%d') }}</p>
+    </div>
+  </div>
+  <div class="row mb-3">
+    <div class="col text-end">
+      <p>Adres inwestycji: {{ wycena.adres_inwestycji }}</p>
+    </div>    
+  </div>
+  <div class="row mb-3">
+    <div class="col text-center">
+      <p>oferta ważna 31 dni od daty wystawienia. W tym okresie cena lub warunki wykonania mogą ulec zmianie.</p>
+    </div>    
+  </div>
+  {% for sekcja in sekcje %}
+   {% set szczegoly_dla_sekcji = wycena.szczegoly | selectattr("pozycja.kategoria_wyceny.nazwa_kategorii", "equalto", sekcja) | list %}
+  {% if szczegoly_dla_sekcji %}
+    {% set podkategoria = szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.pod_kategoria %}
+    <div class="avoid-break">
+        <h3>{{ sekcja }}: {{ podkategoria }}</h3>
+    <!-- opis podkategorii -->
+     {% if szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.opis_kategorii != None %}
+    <p>{{ szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.opis_kategorii }}</p>
+    {% endif %}
+    <div class="row">
+      <div class="col-auto">
+        {% if szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.zdjecie_url %}
+        <img src="{{ url_for('static', filename=szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.zdjecie_url) }}"
+             alt="{{ podkategoria }}"
+             class="rounded shadow-sm" 
+             width="150"
+             height="150"/>
+        
+        {% endif %}
+      </div>
+      <div class="col-8">
+        <table class="table">
+          <tbody>
+            {% for szczegol in szczegoly_dla_sekcji %}
+            <tr>
+              {#<td>{{ szczegol.pozycja.pozycja if szczegol.pozycja else szczegol.indywidualna_nazwa }}</td>#}
+              <td>{{ szczegol.indywidualna_nazwa if szczegol.indywidualna_nazwa else szczegol.pozycja.pozycja }}</td>
+              <td>{{ szczegol.dodatkowy_opis }}</td>
+              <td>
+                {% if szczegol.pozycja.jednostka_miary in ["kpl", "szt"] %}
+                  {{ szczegol.ilosc|round(0)|int }} {{ szczegol.pozycja.jednostka_miary }}
+                {% elif szczegol.pozycja.jednostka_miary in ["m2", "mb"] %}
+                  {{ "%.2f"|format(szczegol.ilosc) }} {{ szczegol.pozycja.jednostka_miary }}
+                {% else %}
+                  {{ szczegol.ilosc }} {{ szczegol.pozycja.jednostka_miary }}
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    </div>
+    
+  {% endif %}
+  <br>
+  {% endfor %}
+
+<!-- Podsumowanie wartosci kategorii -->
+
+<div class="row">
+  <div class="col"></div>
+  <div class="col"></div>
+  <div class="col text-end">
+{% for kat, wartosc in wycena.wartosc_podsumowanie_kategorii.items() %}
+    {% if kat != "Paczki" %}
+      <p><strong>{{ kat }}:</strong> {{ wartosc|round(2) }} zł</p>
+    {% endif %}
+{% endfor %}
+<hr>
+    <p><strong>Cena całkowita:</strong> {{ wycena.wartosc_calkowita|round(2) }} zł</p>
+
+  </div>
+</div>
+
+
+
+</div>
+
+{% endblock %}

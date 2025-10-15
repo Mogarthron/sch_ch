@@ -1,5 +1,27 @@
 {% extends "layout.html" %} {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='print.css') }}" media="print">
+<style>
+  .offer-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .offer-table th, .offer-table td { border: 2px solid #333; vertical-align: middle; padding: .5rem; }
+  .img-box {
+    width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;
+    overflow: hidden; border-radius: .25rem;
+  }
+  .img-box img { max-width: 100%; max-height: 100%; object-fit: cover; display: block; }
+  .placeholder { opacity: .5; font-size: .8rem; color: #666; border: 1px dashed #aaa; background: #f9f9f9; }
+  .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+
+  /* Szerokości kolumn kontrolujemy colgroup poniżej (120px / auto / 90px) */
+  .text-right { text-align: right; }
+  .section-row th { background: #f6f6f6; font-weight: 600; }
+
+  .offer-summary { border-collapse: collapse; font-size: .9rem; min-width: 320px; }
+  .offer-summary th, .offer-summary td { border: 2px solid #333; padding: .4rem .6rem; }
+  .offer-summary .label { white-space: nowrap; }
+  .offer-summary .value { text-align: right; white-space: nowrap; }
+  .offer-summary tfoot td { font-weight: 700; background: #f6f6f6; }
+</style>
+
 <div class="container mb-3">
   <div class="d-flex justify-content-end mb-3">
   <button class="btn btn-outline-secondary d-print-none" onclick="window.print()">
@@ -44,73 +66,135 @@
       <p>oferta ważna 31 dni od daty wystawienia. W tym okresie cena lub warunki wykonania mogą ulec zmianie.</p>
     </div>    
   </div>
-  {% for sekcja in sekcje %}
-   {% set szczegoly_dla_sekcji = wycena.szczegoly | selectattr("pozycja.kategoria_wyceny.nazwa_kategorii", "equalto", sekcja) | list %}
-  {% if szczegoly_dla_sekcji %}
-    {% set podkategoria = szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.pod_kategoria %}
-    <div class="avoid-break">
-        <h3>{{ sekcja }}: {{ podkategoria }}</h3>
-    <!-- opis podkategorii -->
-     {% if szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.opis_kategorii != None %}
-    <p>{{ szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.opis_kategorii }}</p>
-    {% endif %}
-    <div class="row">
-      <div class="col-auto">
-        {% if szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.zdjecie_url %}
-        <img src="{{ url_for('static', filename=szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.zdjecie_url) }}"
-             alt="{{ podkategoria }}"
-             class="rounded shadow-sm" 
-             width="150"
-             height="150"/>
-        
-        {% endif %}
-      </div>
-      <div class="col-8">
-        <table class="table">
-          <tbody>
-            {% for szczegol in szczegoly_dla_sekcji %}
+ <table class="offer-table align-middle">
+  <colgroup>
+    <col style="width:120px;">   {# kolumna ze zdjęciem: trochę szersza niż 100x100 #}
+    <col style="width:auto;">    {# opis – najszersza #}
+    <col style="width:90px;">    {# ilość + jednostka – najwęższa #}
+  </colgroup>
+  <thead>
+    <!-- <tr>
+      <th>Zdjęcie</th>
+      <th>Opis</th>
+      <th class="text-right">Ilość</th>
+    </tr> -->
+  </thead>
+  <tbody>
+    {% for sekcja in sekcje %}
+      {% set szczegoly_dla_sekcji = wycena.szczegoly
+          | selectattr("pozycja.kategoria_wyceny.nazwa_kategorii", "equalto", sekcja)
+          | list %}
+      {% if szczegoly_dla_sekcji %}
+        {% set podkategoria = szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.pod_kategoria %}
+        {% set opis_kategorii = szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.opis_kategorii %}
+        {% set zdjecie_kategorii = szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.zdjecie_url %}
+
+       
+
+        {% set is_typ_schodow = sekcja|lower in ["typ schodów","typ schodow"] %}
+        {% if is_typ_schodow %}
+          {# 1 wiersz na jednostkę – sumujemy ilości #}
+          {% set grupy = szczegoly_dla_sekcji | groupby("pozycja.jednostka_miary") %}
+          {% for grupa in grupy|sort(attribute="grouper") %}
+            {% set jednostka = grupa.grouper %}
+            {% set suma = grupa.list | sum(attribute="ilosc") %}
             <tr>
-              {#<td>{{ szczegol.pozycja.pozycja if szczegol.pozycja else szczegol.indywidualna_nazwa }}</td>#}
-              <td>{{ szczegol.indywidualna_nazwa if szczegol.indywidualna_nazwa else szczegol.pozycja.pozycja }}</td>
-              <td>{{ szczegol.dodatkowy_opis }}</td>
               <td>
-                {% if szczegol.pozycja.jednostka_miary in ["kpl", "szt"] %}
-                  {{ szczegol.ilosc|round(0)|int }} {{ szczegol.pozycja.jednostka_miary }}
-                {% elif szczegol.pozycja.jednostka_miary in ["m2", "mb"] %}
-                  {{ "%.2f"|format(szczegol.ilosc) }} {{ szczegol.pozycja.jednostka_miary }}
+                {% if zdjecie_kategorii %}
+                  <div class="img-box">
+                    <img src="{{ url_for('static', filename=zdjecie_kategorii) }}" alt="{{ podkategoria }}">
+                  </div>
                 {% else %}
-                  {{ szczegol.ilosc }} {{ szczegol.pozycja.jednostka_miary }}
+                  <div class="img-box placeholder">brak zdjęcia</div>
+                {% endif %}
+              </td>
+              <td>
+                <div class="fw-semibold">Typ schodów — {{ podkategoria }}</div>
+                <div class="text-muted small">
+                  {{ opis_kategorii }}
+                </div>
+              </td>
+              <td class="text-right">
+                {% if jednostka in ["kpl","szt"] %}
+                  {{ suma|round(0)|int }} {{ jednostka }}
+                {% elif jednostka in ["m2","mb"] %}
+                  {{ "%.2f"|format(suma) }} {{ jednostka }}
+                {% else %}
+                  {{ suma }} {{ jednostka }}
                 {% endif %}
               </td>
             </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          {% endfor %}
+        {% else %}
+          {# standard: wiersz per pozycja, posortowane po jednostce #}
+          {% set posortowane = szczegoly_dla_sekcji | sort(attribute='pozycja.jednostka_miary') %}
+          {% for szczegol in posortowane %}
+            {% set nazwa = szczegol.indywidualna_nazwa if szczegol.indywidualna_nazwa else szczegol.pozycja.pozycja %}
+            {% set jednostka = szczegol.pozycja.jednostka_miary %}
+            {% set zdjecie_pozycji = szczegol.pozycja.zdjecie_url if szczegol.pozycja and szczegol.pozycja.zdjecie_url else None %}
+            <tr>
+              <td>
+                {% if zdjecie_pozycji %}
+                  <div class="img-box">
+                    <img src="{{ url_for('static', filename=zdjecie_pozycji) }}" alt="{{ nazwa }}">
+                  </div>
+                {% elif zdjecie_kategorii %}
+                  <div class="img-box">
+                    <img src="{{ url_for('static', filename=zdjecie_kategorii) }}" alt="{{ podkategoria }}">
+                  </div>
+                {% else %}
+                  <div class="img-box placeholder">brak zdjęcia</div>
+                {% endif %}
+              </td>
+              <td>
+                <div class="fw-semibold">{{ nazwa }}</div>
+                {% if szczegol.dodatkowy_opis %}
+                  <div class="text-muted small">{{ szczegol.dodatkowy_opis }}</div>
+                {% endif %}
+              </td>
+              <td class="text-right">
+                {% if jednostka in ["kpl","szt"] %}
+                  {{ szczegol.ilosc|round(0)|int }} {{ jednostka }}
+                {% elif jednostka in ["m2","mb"] %}
+                  {{ "%.2f"|format(szczegol.ilosc) }} {{ jednostka }}
+                {% else %}
+                  {{ szczegol.ilosc }} {{ jednostka }}
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+  </tbody>
+</table>
 
-    </div>
-    
-  {% endif %}
-  <br>
-  {% endfor %}
+
 
 <!-- Podsumowanie wartosci kategorii -->
 
-<div class="row">
-  <div class="col"></div>
-  <div class="col"></div>
-  <div class="col text-end">
-{% for kat, wartosc in wycena.wartosc_podsumowanie_kategorii.items() %}
-    {% if kat != "Paczki" %}
-      <p><strong>{{ kat }}:</strong> {{ wartosc|round(2) }} zł</p>
-    {% endif %}
-{% endfor %}
-<hr>
-    <p><strong>Cena całkowita:</strong> {{ wycena.wartosc_calkowita|round(2) }} zł</p>
-
-  </div>
+<!-- Podsumowanie (mała tabelka po prawej) -->
+<div class="d-flex justify-content-end mt-3">
+  <table class="offer-summary">
+    <tbody>
+      {% for kat, wartosc in wycena.wartosc_podsumowanie_kategorii.items() %}
+        {% if kat != "Paczki" %}
+          <tr>
+            <td class="label">{{ kat }}</td>
+            <td class="value">{{ "%.2f"|format(wartosc) }} zł</td>
+          </tr>
+        {% endif %}
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td class="label">Cena całkowita</td>
+        <td class="value">{{ "%.2f"|format(wycena.wartosc_calkowita) }} zł</td>
+      </tr>
+    </tfoot>
+  </table>
 </div>
+
 
 
 
