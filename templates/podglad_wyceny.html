@@ -147,9 +147,14 @@
                 {% endif %}
               </td>
               <td>
-                <div class="fw-semibold">{{ nazwa }}</div>
+                {#<div class="fw-semibold">{{ nazwa }}</div>#}
+                
                 {% if szczegol.dodatkowy_opis %}
                   <div class="text-muted small">{{ szczegol.dodatkowy_opis }}</div>
+                {% elif opis_kategorii != "None" %}
+                  <div class="text-muted small">{{ opis_kategorii }}</div>
+                {% else %}
+                <div class="text-muted small"> {{ nazwa }}  </div>
                 {% endif %}
               </td>
               <td class="text-right">
@@ -173,25 +178,43 @@
 
 <!-- Podsumowanie wartosci kategorii -->
 
-<!-- Podsumowanie (mała tabelka po prawej) -->
+
+
+{# obliczenia #}
+{% set netto = (wycena.wartosc_calkowita | default(0) | float) %}
+
+{% set vat = netto * 0.08 %}
+{% set brutto = netto + vat %}
 <div class="d-flex justify-content-end mt-3">
   <table class="offer-summary">
     <tbody>
-      {% for kat, wartosc in wycena.wartosc_podsumowanie_kategorii.items() %}
+      {# {% for kat, wartosc in wycena.wartosc_podsumowanie_kategorii.items() %}
         {% if kat != "Paczki" %}
           <tr>
             <td class="label">{{ kat }}</td>
             <td class="value">{{ "%.2f"|format(wartosc) }} zł</td>
           </tr>
         {% endif %}
-      {% endfor %}
+      {% endfor %} #}
+      <tr>
+        <td class="label">Cena netto</td>
+        <td class="value">{{ "%.2f"|format(netto) }} zł</td>
+       </tr> 
+       <tr>
+        <td class="label">Vat 8%</td>
+        <td class="value">{{ "%.2f"|format(vat)  }} zł</td>
+        </tr>
+        <tr>
+        <td class="label">Cena brutto</td>
+        <td class="value">{{ "%.2f"|format(brutto) }} zł</td>
+      </tr>
     </tbody>
-    <tfoot>
+   {# <tfoot>
       <tr>
         <td class="label">Cena całkowita</td>
         <td class="value">{{ "%.2f"|format(wycena.wartosc_calkowita) }} zł</td>
       </tr>
-    </tfoot>
+    </tfoot> #}
   </table>
 </div>
 
