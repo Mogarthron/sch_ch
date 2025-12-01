@@ -35,6 +35,7 @@
         <th>Cena całkowita</th>
         <th></th>
         <th></th>
+        <th></th>
 
       </tr>
     </thead>
@@ -70,6 +71,10 @@
 
         <td>
           <a href="{{url_for('podsumowanie_widok', wycid=wycena.wycid)}}" class="btn btn-primary">Podgląd wyceny</a>
+        </td>
+
+        <td>
+          <a href="{{url_for('podglad_wyceny', wycid=wycena.wycid)}}" class="btn btn-primary">Wycena klienta</a>
         </td>
 
       </tr>

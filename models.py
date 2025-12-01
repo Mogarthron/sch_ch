@@ -144,6 +144,7 @@ class Pozycje_Wyceny(Base):
     cena_jednostkowa = Column(Numeric(10,2))
     cena_materialu = Column(Numeric(10,2))
     jednostka_miary = Column(String(16))
+    grupa_pozycji = Column(String(16))
     data_wprowadzenia = Column(DateTime, default=dt.now)
     data_edycji = Column(DateTime, default=dt.now, onupdate=dt.now)
 
@@ -151,12 +152,13 @@ class Pozycje_Wyceny(Base):
     
     
 
-    def __init__(self, kategoria_id:int, pozycja, cena_jednostkowa, jednostka_miary, cena_materialu=0):
+    def __init__(self, kategoria_id:int, pozycja, cena_jednostkowa, jednostka_miary, cena_materialu=0, grupa_pozycji=None):
         self.kategoria_id = kategoria_id
         self.pozycja = pozycja
         self.cena_jednostkowa = cena_jednostkowa
         self.cena_materialu = cena_materialu
         self.jednostka_miary = jednostka_miary
+        self.grupa_pozycji = grupa_pozycji
       
     @classmethod
     def from_form(cls, form, kategoria_id:int):

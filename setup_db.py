@@ -29,15 +29,13 @@ def create_admin():
         print("Użytkownik admin już istnieje.")
 
 def create_handlowiec():
-    if not session.query(Handlowiec).filter_by(user_name="admin").first():
-        handl = [
+    handl = [
             Handlowiec(user_id=2, nr_kontaktowy="666555666", email="han1_@poczta.com.pl"),
                       
             ]
-        session.add_all(handl)
-        print("Dodano handlowca")
-    else:
-        print("Użytkownik admin już istnieje.")
+    session.add_all(handl)
+    print("Dodano handlowca")
+
 
 
 
@@ -99,8 +97,8 @@ def main():
     create_static_folders()
     create_admin()
     create_handlowiec()
-    create_kategorie()
-    create_pozycje()
+    # create_kategorie()
+    # create_pozycje()
     session.commit()
     session.close()
     print("✅ Baza danych gotowa do pracy.")
