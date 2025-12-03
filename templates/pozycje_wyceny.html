@@ -25,6 +25,7 @@
       <th>Cena jednostkowa</th>
       <th>Cena materialu</th>
       <th>Jednostka miary</th>
+      <th>url zdjęcia</th>
       <th>Ostatnia edycja</th>
       <th>Akcje</th>
     </tr>
@@ -38,6 +39,13 @@
       <td class="cena">{{ poz.cena_jednostkowa }}</td>
       <td class="cena_mat">{{ poz.cena_materialu }}</td>
       <td class="miara">{{ poz.jednostka_miary }}</td>
+      <td class="zdjecie">
+        {% if poz.zdjecie_url %}
+          {{ poz.zdjecie_url }}
+        {% else %}
+          <span class="text-muted small">brak zdjęcia</span>
+        {% endif %}
+      </td>
       <td class="data_edycja">{{ poz.data_edycji.strftime('%Y-%m-%d %H:%M') }}</td>
       <td>
         <button class="btn btn-warning btn-sm edytuj">Edytuj</button>
@@ -76,6 +84,10 @@
             <label>Jednostka Maiary</label>
             <input type="text" name="jednostka_miary" class="form-control">
           </div>
+          <div class="mb-3">
+          <label>Zdjęcie pozycji (opcjonalnie)</label>
+          <input type="file" name="zdjecie" class="form-control" accept="image/*">
+        </div>
         </div>
         <div class="modal-footer">
           <button type="submit" class="btn btn-primary">Zapisz</button>

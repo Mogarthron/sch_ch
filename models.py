@@ -147,18 +147,20 @@ class Pozycje_Wyceny(Base):
     grupa_pozycji = Column(String(16))
     data_wprowadzenia = Column(DateTime, default=dt.now)
     data_edycji = Column(DateTime, default=dt.now, onupdate=dt.now)
+    zdjecie_url = Column(String(256))
 
     kategoria_wyceny = relationship("Kategorie_Wyceny", back_populates="pozycje_wyceny")
     
     
 
-    def __init__(self, kategoria_id:int, pozycja, cena_jednostkowa, jednostka_miary, cena_materialu=0, grupa_pozycji=None):
+    def __init__(self, kategoria_id:int, pozycja, cena_jednostkowa, jednostka_miary, cena_materialu=0, grupa_pozycji=None, zdjecie_url=None,):
         self.kategoria_id = kategoria_id
         self.pozycja = pozycja
         self.cena_jednostkowa = cena_jednostkowa
         self.cena_materialu = cena_materialu
         self.jednostka_miary = jednostka_miary
         self.grupa_pozycji = grupa_pozycji
+        self.zdjecie_url = zdjecie_url
       
     @classmethod
     def from_form(cls, form, kategoria_id:int):

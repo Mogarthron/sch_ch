@@ -198,4 +198,5 @@ alembic
 alembic.ini
 static/zdjecia
 static/pdf
+db_manipulation.ipynb
 .vscode
