@@ -1,0 +1,329 @@
+{% extends "layout.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='print.css') }}" media="print">
+
+<style>
+
+  .d-none { 
+    display: none !important; 
+  }
+
+  @media print {
+    .d-print-none { 
+      display: none !important; 
+    }
+
+    /* każda widoczna strona drukowana jako osobna kartka */
+    .view-page {
+      page-break-after: always;
+    }
+  }
+</style>
+
+<div class="container mb-3">
+  <div class="d-flex justify-content-end mb-3">
+    <button class="btn btn-outline-secondary d-print-none" onclick="window.print()">
+      Drukuj aktualną zakładkę
+    </button>
+  </div>
+
+  {# Nawigacja między widokami (tylko na ekranie) #}
+  <ul class="nav nav-tabs d-print-none mb-3">
+    <li class="nav-item">
+      <button class="nav-link active" type="button" onclick="showView(1)">1. Dane oferty</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" type="button" onclick="showView(2)">2. Balustrady</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" type="button" onclick="showView(3)">3. Dodatki i dopłaty</button>
+    </li>
+  </ul>
+
+  {# ================================================== #}
+  {# 1. STRONA – LOGO + DANE WYCENY + PODSUMOWANIE      #}
+  {# ================================================== #}
+
+    {% set KAT_SCHODY = ["Typ Schodów", "Typ Schodow"] %}
+  <div id="view1" class="view-page">
+    <div class="row mb-3">
+      <div class="col text-center">
+        <img
+          src="{{ url_for('static', filename='schody-chudzinski-logo.png') }}"
+          alt="LOGO"
+        />
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col">
+        <p>
+          <strong>Oferta wystawiona przez:</strong>
+          {{ wycena.dane_handlowca["imie"] }} {{ wycena.dane_handlowca["nazwisko"] }}<br>
+          <strong>Email kontaktowy:</strong> {{ wycena.dane_handlowca["email"] }}<br>
+          <strong>Telefon kontakowy:</strong> {{ wycena.dane_handlowca["nr_kontaktowy"] }}
+        </p>
+      </div>
+      <div class="col text-end">
+        <p>dla P. {{ wycena.imie_klienta}} {{ wycena.nazwisko_klienta }}</p>
+        <p>Data wystawienia: {{ wycena.data_wprowadzenia.strftime('%Y-%m-%d') }}</p>
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col text-end">
+        <p>Adres inwestycji: {{ wycena.adres_inwestycji }}</p>
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col text-center">
+        <p>oferta ważna 31 dni od daty wystawienia. W tym okresie cena lub warunki wykonania mogą ulec zmianie.</p>
+      </div>
+    </div>
+    {% for sekcja in KAT_SCHODY %}
+      {% if sekcja in sekcje %}
+        {% set szczegoly_dla_sekcji = wycena.szczegoly
+            | selectattr("pozycja.kategoria_wyceny.nazwa_kategorii", "equalto", sekcja)
+            | list %}
+        {% if szczegoly_dla_sekcji %}
+          {% set podkategoria = szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.pod_kategoria %}
+          <div class="mb-4">
+            <h3>{{ sekcja }}: {{ podkategoria }}</h3>
+
+            {% if szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.opis_kategorii != None %}
+              <p>{{ szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.opis_kategorii }}</p>
+            {% endif %}
+
+            <div class="row">
+              <div class="col-auto">
+                {% if szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.zdjecie_url %}
+                  <img src="{{ url_for('static', filename=szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.zdjecie_url) }}"
+                       alt="{{ podkategoria }}"
+                       class="rounded shadow-sm"
+                       width="200"
+                       height="200" />
+                {% endif %}
+              </div>
+              <div class="col-8">
+                <table class="table">
+                  <tbody>
+                    {% for szczegol in szczegoly_dla_sekcji %}
+                      <tr>
+                        <td>{{ szczegol.indywidualna_nazwa if szczegol.indywidualna_nazwa else szczegol.pozycja.pozycja }}</td>
+                        <td>{{ szczegol.dodatkowy_opis }}</td>
+                        <td>
+                          {% if szczegol.pozycja.jednostka_miary in ["kpl", "szt"] %}
+                            {{ szczegol.ilosc|round(0)|int }} {{ szczegol.pozycja.jednostka_miary }}
+                          {% elif szczegol.pozycja.jednostka_miary in ["m2", "mb"] %}
+                            {{ "%.2f"|format(szczegol.ilosc) }} {{ szczegol.pozycja.jednostka_miary }}
+                          {% else %}
+                            {{ szczegol.ilosc }} {{ szczegol.pozycja.jednostka_miary }}
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+
+    {# Podsumowanie wartości kategorii #}
+    {#<div class="row">
+      <div class="col"></div>
+      <div class="col"></div>
+      <div class="col text-end">
+        {% for kat, wartosc in wycena.wartosc_podsumowanie_kategorii.items() %}
+          {% if kat != "Paczki" %}
+            <p><strong>{{ kat }}:</strong> {{ wartosc|round(2) }} zł</p>
+          {% endif %}
+        {% endfor %}
+        <hr>
+        <p><strong>Cena całkowita:</strong> {{ wycena.wartosc_calkowita|round(2) }} zł</p>
+      </div>
+    </div>#}
+    <div class="col-12 text-end">
+      {% set ns = namespace(suma=0) %}
+      {% for kat, wartosc in wycena.wartosc_podsumowanie_kategorii.items() %}
+        {% if kat in KAT_SCHODY %}
+      
+          {% set ns.suma = ns.suma + wartosc %}
+        {% endif %}
+      {% endfor %}
+      <hr>
+      <p>
+        <strong>Schody:</strong>
+        {{ ns.suma|round(2) }} zł
+      </p>
+    </div>
+  </div>
+
+  {# ================================================== #}
+  {# 2. STRONA – BALUSTRADY + WYKOŃCZENIE STROPU        #}
+  {# ================================================== #}
+
+  {# kolejność zdefiniowana ręcznie -> Balustrady ZAWSZE pierwsze #}
+  {% set KAT_BALUSTRADY = ["Balustrady", "Wykończenie stropu pod balustradą"] %}
+
+  <div id="view2" class="view-page d-none">
+    <h2 class="mb-4">Balustrady i wykończenie stropu</h2>
+
+    {# iterujemy po KAT_BALUSTRADY (stała kolejność), ale tylko jeśli kategoria istnieje w sekcjach #}
+    {% for sekcja in KAT_BALUSTRADY %}
+      {% if sekcja in sekcje %}
+        {% set szczegoly_dla_sekcji = wycena.szczegoly
+            | selectattr("pozycja.kategoria_wyceny.nazwa_kategorii", "equalto", sekcja)
+            | list %}
+        {% if szczegoly_dla_sekcji %}
+          {% set podkategoria = szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.pod_kategoria %}
+          <div class="mb-4">
+            <h3>{{ sekcja }}: {{ podkategoria }}</h3>
+
+            {% if szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.opis_kategorii != None %}
+              <p>{{ szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.opis_kategorii }}</p>
+            {% endif %}
+
+            <div class="row">
+              <div class="col-auto">
+                {% if szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.zdjecie_url %}
+                  <img src="{{ url_for('static', filename=szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.zdjecie_url) }}"
+                       alt="{{ podkategoria }}"
+                       class="rounded shadow-sm"
+                       width="200"
+                       height="200" />
+                {% endif %}
+              </div>
+              <div class="col-8">
+                <table class="table">
+                  <tbody>
+                    {% for szczegol in szczegoly_dla_sekcji %}
+                      <tr>
+                        <td>{{ szczegol.indywidualna_nazwa if szczegol.indywidualna_nazwa else szczegol.pozycja.pozycja }}</td>
+                        <td>{{ szczegol.dodatkowy_opis }}</td>
+                        <td>
+                          {% if szczegol.pozycja.jednostka_miary in ["kpl", "szt"] %}
+                            {{ szczegol.ilosc|round(0)|int }} {{ szczegol.pozycja.jednostka_miary }}
+                          {% elif szczegol.pozycja.jednostka_miary in ["m2", "mb"] %}
+                            {{ "%.2f"|format(szczegol.ilosc) }} {{ szczegol.pozycja.jednostka_miary }}
+                          {% else %}
+                            {{ szczegol.ilosc }} {{ szczegol.pozycja.jednostka_miary }}
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+    <div class="row mt-4">
+    <div class="col-12 text-end">
+      {% set ns = namespace(suma=0) %}
+      {% for kat, wartosc in wycena.wartosc_podsumowanie_kategorii.items() %}
+        {% if kat in KAT_BALUSTRADY %}
+          <p><strong>{{ kat }}:</strong> {{ wartosc|round(2) }} zł</p>
+          {% set ns.suma = ns.suma + wartosc %}
+        {% endif %}
+      {% endfor %}
+      <hr>
+      <p>
+        <strong>Razem (balustrady + wykończenie stropu):</strong>
+        {{ ns.suma|round(2) }} zł
+      </p>
+    </div>
+  </div>
+  </div>
+
+  {# ================================================== #}
+  {# 3. STRONA – DODATKI I DOPŁATY                      #}
+  {# ================================================== #}
+
+  {# tu wpisz realne nazwy kategorii z bazy, które są dodatkami/dopłatami #}
+  {% set KAT_DODATKI = ["Dopłaty", "Inne dopłaty do balustrady", "Inne dopłaty"] %}
+
+  <div id="view3" class="view-page d-none">
+    <h2 class="mb-4">Dodatki i dopłaty</h2>
+
+    {% for sekcja in KAT_DODATKI %}
+      {% if sekcja in sekcje %}
+        {% set szczegoly_dla_sekcji = wycena.szczegoly
+            | selectattr("pozycja.kategoria_wyceny.nazwa_kategorii", "equalto", sekcja)
+            | list %}
+        {% if szczegoly_dla_sekcji %}
+          {% set podkategoria = szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.pod_kategoria %}
+          <div class="mb-4">
+            <h3>{{ sekcja }}: {{ podkategoria }}</h3>
+
+            {% if szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.opis_kategorii != None %}
+              <p>{{ szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.opis_kategorii }}</p>
+            {% endif %}
+
+            <div class="row">
+              <div class="col-auto">
+                {% if szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.zdjecie_url %}
+                  <img src="{{ url_for('static', filename=szczegoly_dla_sekcji[0].pozycja.kategoria_wyceny.zdjecie_url) }}"
+                       alt="{{ podkategoria }}"
+                       class="rounded shadow-sm"
+                       width="150"
+                       height="150" />
+                {% endif %}
+              </div>
+              <div class="col-8">
+                <table class="table">
+                  <tbody>
+                    {% for szczegol in szczegoly_dla_sekcji %}
+                      <tr>
+                        <td>{{ szczegol.indywidualna_nazwa if szczegol.indywidualna_nazwa else szczegol.pozycja.pozycja }}</td>
+                        <td>{{ szczegol.dodatkowy_opis }}</td>
+                        <td>
+                          {% if szczegol.pozycja.jednostka_miary in ["kpl", "szt"] %}
+                            {{ szczegol.ilosc|round(0)|int }} {{ szczegol.pozycja.jednostka_miary }}
+                          {% elif szczegol.pozycja.jednostka_miary in ["m2", "mb"] %}
+                            {{ "%.2f"|format(szczegol.ilosc) }} {{ szczegol.pozycja.jednostka_miary }}
+                          {% else %}
+                            {{ szczegol.ilosc }} {{ szczegol.pozycja.jednostka_miary }}
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  function showView(nr) {
+    const views = [1, 2, 3];
+    views.forEach(v => {
+      const el = document.getElementById('view' + v);
+      if (el) {
+        el.classList.toggle('d-none', v !== nr);
+      }
+    });
+
+    // podświetlanie aktywnej zakładki
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach((link, idx) => {
+      if (idx === nr - 1) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+  }
+</script>
+
+{% endblock %}
