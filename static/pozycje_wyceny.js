@@ -67,110 +67,110 @@
 // });
 
 
-// // lista unikalych wartosci z kolumny nazwa kategorii
-// document.addEventListener("DOMContentLoaded", () => {
-//   fetch("pobierz_nazwy_podkategorii")
-//     .then(res => res.json())
-//     .then(dane => {
-//       const datalist = document.getElementById("lista_kategorii");
-//       datalist.innerHTML = "";  // wyczyść
+// lista unikalych wartosci z kolumny nazwa kategorii
+document.addEventListener("DOMContentLoaded", () => {
+  fetch("pobierz_nazwy_podkategorii")
+    .then(res => res.json())
+    .then(dane => {
+      const datalist = document.getElementById("lista_kategorii");
+      datalist.innerHTML = "";  // wyczyść
 
-//       dane.forEach(nazwa => {
-//         const option = document.createElement("option");
-//         option.value = nazwa;
-//         datalist.appendChild(option);
-//       });
-//     })
-//     .catch(err => {
-//       console.error("Nie udało się pobrać listy kategorii:", err);
-//     });
-// });
-
-
-// // // obsługa formularza dodawania
-// document.addEventListener("DOMContentLoaded", function () {
-//   const form = document.getElementById("formularzPozycjeWyceny");
-
-//   form.addEventListener("submit", function (e) {
-//     e.preventDefault();
-
-//     const formData = new FormData(form);
-
-//     fetch("/dodaj_pozycje_wyceny", {
-//       method: "POST",
-//       body: formData
-//     })
-//     .then(async (res) => {
-//       if (!res.ok) {
-//         const text = await res.text();
-//         throw new Error(`HTTP ${res.status} – ${text}`);
-//       }
-//       return res.json();
-//     })
-//     .then(data => {
-//       if (data.success) {
-//         // Sukces: np. reload lub dynamiczne dodanie
-//         location.reload();
-//       } else {
-//         alert("Błąd aplikacji: " + data.error);
-//       }
-//     })
-//     .catch(err => {
-//       console.error("Błąd sieci, JSON lub serwera:", err);
-//       alert("Wystąpił błąd:\n" + err.message);
-//     });
-
-//     return false; // zabezpieczenie przed domyślnym submitem
-//   });
-// });
+      dane.forEach(nazwa => {
+        const option = document.createElement("option");
+        option.value = nazwa;
+        datalist.appendChild(option);
+      });
+    })
+    .catch(err => {
+      console.error("Nie udało się pobrać listy kategorii:", err);
+    });
+});
 
 
-// // dodaj modal
-// document.addEventListener("DOMContentLoaded", function () {
-//   const modalEl = document.getElementById('dodajModal');
-//   const modal = new bootstrap.Modal(modalEl);  // działa tylko, jeśli modalEl istnieje
-// });
+// // obsługa formularza dodawania
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("formularzPozycjeWyceny");
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(form);
+
+    fetch("/dodaj_pozycje_wyceny", {
+      method: "POST",
+      body: formData
+    })
+    .then(async (res) => {
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`HTTP ${res.status} – ${text}`);
+      }
+      return res.json();
+    })
+    .then(data => {
+      if (data.success) {
+        // Sukces: np. reload lub dynamiczne dodanie
+        location.reload();
+      } else {
+        alert("Błąd aplikacji: " + data.error);
+      }
+    })
+    .catch(err => {
+      console.error("Błąd sieci, JSON lub serwera:", err);
+      alert("Wystąpił błąd:\n" + err.message);
+    });
+
+    return false; // zabezpieczenie przed domyślnym submitem
+  });
+});
 
 
-// // filtorwanie tabeli 
-// document.addEventListener("DOMContentLoaded", () => {
-//   const filtrKategoria = document.getElementById("filtr_kategoria");
-//   const filtrNazwa = document.getElementById("filtr_nazwa");
+// dodaj modal
+document.addEventListener("DOMContentLoaded", function () {
+  const modalEl = document.getElementById('dodajModal');
+  const modal = new bootstrap.Modal(modalEl);  // działa tylko, jeśli modalEl istnieje
+});
 
-//   // Automatyczne generowanie unikalnych opcji do selecta z kolumny "nazwa_kategorii"
-//   const kategorieSet = new Set();
-//   document.querySelectorAll("table tbody tr").forEach(row => {
-//     const kategoria = row.querySelector(".nazwa_kategorii").textContent.trim();
-//     if (kategoria) kategorieSet.add(kategoria);
-//   });
 
-//   const selectKategoria = document.getElementById("filtr_kategoria");
-//   [...kategorieSet].sort().forEach(kat => {
-//     const option = document.createElement("option");
-//     option.value = kat;
-//     option.textContent = kat;
-//     selectKategoria.appendChild(option);
-//   });
+// filtorwanie tabeli 
+document.addEventListener("DOMContentLoaded", () => {
+  const filtrKategoria = document.getElementById("filtr_kategoria");
+  const filtrNazwa = document.getElementById("filtr_nazwa");
 
-//   const filtrujTabele = () => {
-//     const kategoriaWartosc = filtrKategoria.value.toLowerCase();
-//     const nazwaWartosc = filtrNazwa.value.toLowerCase();
+  // Automatyczne generowanie unikalnych opcji do selecta z kolumny "nazwa_kategorii"
+  const kategorieSet = new Set();
+  document.querySelectorAll("table tbody tr").forEach(row => {
+    const kategoria = row.querySelector(".nazwa_kategorii").textContent.trim();
+    if (kategoria) kategorieSet.add(kategoria);
+  });
 
-//     document.querySelectorAll("table tbody tr").forEach(row => {
-//       const kolKategoria = row.querySelector(".nazwa_kategorii").textContent.toLowerCase();
-//       const kolNazwa = row.querySelector(".pod_kategoria").textContent.toLowerCase();
+  const selectKategoria = document.getElementById("filtr_kategoria");
+  [...kategorieSet].sort().forEach(kat => {
+    const option = document.createElement("option");
+    option.value = kat;
+    option.textContent = kat;
+    selectKategoria.appendChild(option);
+  });
 
-//       const pokaz =
-//         kolKategoria.includes(kategoriaWartosc) &&
-//         kolNazwa.includes(nazwaWartosc);
+  const filtrujTabele = () => {
+    const kategoriaWartosc = filtrKategoria.value.toLowerCase();
+    const nazwaWartosc = filtrNazwa.value.toLowerCase();
 
-//       row.style.display = pokaz ? "" : "none";
-//     });
-//   };
+    document.querySelectorAll("table tbody tr").forEach(row => {
+      const kolKategoria = row.querySelector(".nazwa_kategorii").textContent.toLowerCase();
+      const kolNazwa = row.querySelector(".pod_kategoria").textContent.toLowerCase();
 
-//   filtrKategoria.addEventListener("input", filtrujTabele);
-//   filtrNazwa.addEventListener("input", filtrujTabele);
-// });
+      const pokaz =
+        kolKategoria.includes(kategoriaWartosc) &&
+        kolNazwa.includes(nazwaWartosc);
+
+      row.style.display = pokaz ? "" : "none";
+    });
+  };
+
+  filtrKategoria.addEventListener("input", filtrujTabele);
+  filtrNazwa.addEventListener("input", filtrujTabele);
+});
 
 document.querySelectorAll(".edytuj").forEach(btn => {
   btn.addEventListener("click", function () {

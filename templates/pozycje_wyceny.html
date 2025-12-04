@@ -46,7 +46,11 @@
           <span class="text-muted small">brak zdjęcia</span>
         {% endif %}
       </td>
+      {% if poz.data_edycji %}
       <td class="data_edycja">{{ poz.data_edycji.strftime('%Y-%m-%d %H:%M') }}</td>
+      {% else %}
+      <td class="data_edycja"></td>
+      {% endif %}
       <td>
         <button class="btn btn-warning btn-sm edytuj">Edytuj</button>
       </td>

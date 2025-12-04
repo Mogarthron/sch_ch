@@ -154,13 +154,11 @@
   {# 2. STRONA – BALUSTRADY + WYKOŃCZENIE STROPU        #}
   {# ================================================== #}
 
-  {# kolejność zdefiniowana ręcznie -> Balustrady ZAWSZE pierwsze #}
   {% set KAT_BALUSTRADY = ["Balustrady", "Wykończenie stropu pod balustradą"] %}
 
   <div id="view2" class="view-page d-none">
   <h2 class="mb-4">Balustrady i wykończenie stropu</h2>
 
-  {# iterujemy po KAT_BALUSTRADY (stała kolejność), ale tylko jeśli kategoria istnieje w sekcjach #}
   {% for sekcja in KAT_BALUSTRADY %}
     {% if sekcja in sekcje %}
       {% set szczegoly_dla_sekcji = wycena.szczegoly
@@ -314,22 +312,26 @@
     {% endif %}
   {% endfor %}
 
-  {#<div class="row mt-4">
+  <div class="row mt-4">
     <div class="col-12 text-end">
       {% set ns = namespace(suma=0) %}
       {% for kat, wartosc in wycena.wartosc_podsumowanie_kategorii.items() %}
-        {% if kat in KAT_DODATKI %}
+       
           <p><strong>{{ kat }}:</strong> {{ wartosc|round(2) }} zł</p>
           {% set ns.suma = ns.suma + wartosc %}
-        {% endif %}
+    
       {% endfor %}
       <hr>
       <p>
-        <strong>Razem:</strong>
+        <strong>Razem netto:</strong>
         {{ ns.suma|round(2) }} zł
       </p>
+      <p>
+        <strong>Razem brutto:</strong>
+        {{ ns.suma*1.08|round(2) }} zł
+      </p>
     </div>
-  </div>#}
+  </div>
   </div>
 </div>
 
