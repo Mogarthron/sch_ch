@@ -88,8 +88,11 @@
 } %}
 {% set order = ["Typ Schodów", "Balustrady", "Wykończenie stropu pod balustradą", "Dopłaty", "Paczki"] %}
 
+
 {# Zgrupuj raz, potem wykorzystuj wielokrotnie #}
-{% set grouped = szczegoly | groupby('pozycja.kategoria_wyceny.nazwa_kategorii') %}
+{% set szczegoly_z_pozycja = szczegoly | selectattr('pozycja', 'ne', none) %}
+{% set szczegoly_bez_pozycji = szczegoly | selectattr('pozycja', 'equalto', none) %}
+{% set grouped = szczegoly_z_pozycja | groupby('pozycja.kategoria_wyceny.nazwa_kategorii') %}
 
 
 {% for desired in order %}
@@ -187,50 +190,45 @@
   {% endif %}
 {% endfor %}
 
-{# --- 3) Na końcu kategoria "Inne" (grouper == None) --- #}
-{% for g in grouped %}
-  {% if g.grouper is none %}
-    {% set kategoria = "Inne" %}
+{# --- 3) Na końcu kategoria "Inne" – pozycje bez przypisanej pozycji --- #}
+{% if szczegoly_bez_pozycji %}
+  <tr class="group-row">
+    <td colspan="7">Inne</td>
+  </tr>
 
-    <tr class="group-row">
-      <td colspan="7">{{ kategoria }}</td>
+  {% set _cena = 0.0 %}
+  {% set _mat  = 0.0 %}
+
+  {% for s in szczegoly_bez_pozycji %}
+    {% set nazwa = s.indywidualna_nazwa or "Pozycja" %}
+    {% set jedn = "" %}
+    {% set ilosc = s.ilosc|float %}
+    {% set cj = 0.0 %}
+    {% set cm = 0.0 %}
+    {% set cena = (s.cena_calkowita or 0)|float %}
+    {% set mat = (s.cena_materialu or 0)|float %}
+
+    {% set _cena = _cena + cena %}
+    {% set _mat  = _mat + mat %}
+
+    <tr>
+      <td>{{ nazwa }}
+        {% if s.dodatkowy_opis %}
+          <div class="text-muted" style="font-size:.85em;">{{ s.dodatkowy_opis }}</div>
+        {% endif %}
+      </td>
+      <td class="text-end">
+        {{ "%.2f"|format(ilosc) }}
+      </td>
+      <td class="text-end">{{ "%.2f"|format(cj) }}</td>
+      <td class="text-end">{{ "%.2f"|format(cm) }}</td>
+      <td>{{ jedn }}</td>
+      <td class="text-end">{{ "%.2f"|format(cena) }}</td>
+      <td class="text-end">{{ "%.2f"|format(mat) }}</td>
     </tr>
+  {% endfor %}
+{% endif %}
 
-    {% set _cena = 0.0 %}
-    {% set _mat  = 0.0 %}
-
-    {% for s in g.list %}
-      {% set nazwa = s.indywidualna_nazwa or (s.pozycja.pozycja if s.pozycja else "Pozycja") %}
-      {% set jedn = s.pozycja.jednostka_miary if s.pozycja else "" %}
-      {% set ilosc = s.ilosc|float %}
-      {% set cj = (s.pozycja.cena_jednostkowa if s.pozycja else 0)|float %}
-      {% set cm = (s.pozycja.cena_materialu if s.pozycja else 0)|float %}
-      {% set cena = (s.cena_calkowita or 0)|float %}
-      {% set mat = (s.cena_materialu or 0)|float %}
-
-      {% set _cena = _cena + cena %}
-      {% set _mat  = _mat + mat %}
-
-      <tr>
-        <td>{{ nazwa }}
-          {% if s.dodatkowy_opis %}<div class="text-muted" style="font-size:.85em;">{{ s.dodatkowy_opis }}</div>{% endif %}
-        </td>
-        <td class="text-end">
-          {% if jedn == "szt" or jedn == "kpl" %}
-            {{ ilosc|int }}
-          {% else %}
-            {{ "%.2f"|format(ilosc) }}
-          {% endif %}
-        </td>
-        <td class="text-end">{{ "%.2f"|format(cj) }}</td>
-        <td class="text-end">{{ "%.2f"|format(cm) }}</td>
-        <td>{{ jedn }}</td>
-        <td class="text-end">{{ "%.2f"|format(cena) }}</td>
-        <td class="text-end">{{ "%.2f"|format(mat) }}</td>
-      </tr>
-    {% endfor %}
-  {% endif %}
-{% endfor %}
 
     </tbody>
   </table>

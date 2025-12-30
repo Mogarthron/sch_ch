@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Wycena schodów – formularz</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .card { border-radius: 14px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .table td, .table th { vertical-align: middle; }
+  </style>
+</head>
+
+<body class="bg-light">
+<div class="container my-4">
+
+  <form method="post" action="{{ url_for('create_quote') }}" id="quoteForm">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h3 class="mb-0">Zlecenie / Wycena</h3>
+      <div class="text-end">
+        <div class="small text-muted">Zlecenie nr / data</div>
+        <div class="d-flex gap-2">
+          <input class="form-control" style="max-width:170px" name="order_no" placeholder="zlecenie nr">
+          <input class="form-control" style="max-width:170px" type="date" name="order_date">
+        </div>
+      </div>
+    </div>
+
+    <!-- 1) Dane klienta / inwestycji -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="mb-3">Dane klienta i inwestycji</h5>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Imię i nazwisko</label>
+            <input class="form-control" name="customer_name" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Tel.</label>
+            <input class="form-control" name="customer_phone">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Email</label>
+            <input class="form-control" type="email" name="customer_email">
+          </div>
+
+          <div class="col-md-8">
+            <label class="form-label">Adres inwestycji</label>
+            <input class="form-control" name="investment_address">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Termin realizacji</label>
+            <input class="form-control" name="realization_term" placeholder="np. 12 tygodni / data">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Zleceniodawca</label>
+            <div class="d-flex gap-3 mt-1">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="buyer_type" value="osoba" checked>
+                <label class="form-check-label">osoba fizyczna</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="buyer_type" value="firma">
+                <label class="form-check-label">firma</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Dane do faktury</label>
+            <input class="form-control" name="invoice_data" placeholder="NIP / adres / nazwa">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2) Schody – rodzaj i podtyp (NOWE ROZDZIELENIE) -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="mb-3">Schody – rodzaj i podtyp</h5>
+       
+        <div class="row g-3">
+          <div class="col-lg-4">
+            <label class="form-label fw-semibold">Rodzaj schodów</label>
+            <select class="form-select" name="stairs_kind" id="stairsKind" required>
+              <option value="">— wybierz —</option>
+              <option value="grzebieniowe">GRZEBIENIOWE</option>
+              <option value="policzkowe">POLICZKOWE</option>
+              <option value="konstr_metalowa">KONSTRUKCJA METALOWA</option>
+              <option value="dywanowe">SCHODY DYWANOWE</option>
+              <option value="wspornikowe">SCHODY WSPORNIKOWE</option>
+            </select>
+
+            <div class="small text-muted mt-2">
+              Wybór determinuje dostępne podtypy.
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <label class="form-label fw-semibold">Podtyp (GRZEBIENIOWE)</label>
+            <select class="form-select" name="grzebieniowe_type" id="grzType" disabled>
+              <option value="">—</option>
+              <option value="pelne">pełne</option>
+              <option value="azurowe">ażurowe</option>
+              <option value="z_zabudowa">z zabudową</option>
+            </select>
+          </div>
+
+          <div class="col-lg-4">
+            <label class="form-label fw-semibold">Podtyp (POLICZKOWE)</label>
+            <select class="form-select" name="policzkowe_type" id="polType" disabled>
+              <option value="">—</option>
+              <option value="pelne">pełne</option>
+              <option value="azurowe">ażurowe</option>
+              <option value="bolcowe">bolcowe</option>
+            </select>
+          </div>
+
+          <div class="col-lg-12">
+            <label class="form-label fw-semibold">Typ (KONSTRUKCJA METALOWA)</label>
+            <select class="form-select" name="metal_type" id="metalType" disabled>
+              <option value="">—</option>
+              <option value="TYP_I">TYP I – schody proste na dwóch profilach stalowych</option>
+              <option value="TYP_II">TYP II – schody zabiegowe i proste, stopnie nakładane na konstrukcję</option>
+              <option value="TYP_III">TYP III – schody zabiegowe i proste, stopnie wchodzą pomiędzy policzki metalowe</option>
+              <option value="TYP_IV">TYP IV – schody zabiegowe i proste, dywanowe na konstrukcji metalowej</option>
+              <option value="TYP_V">TYP V – schody proste na 1 profilu stalowym</option>
+            </select>
+            <div class="small text-muted mt-1">
+              Aktywne tylko gdy wybrano „KONSTRUKCJA METALOWA”.
+            </div>
+            <div class="mt-3">
+              <label class="form-label fw-semibold">Wzór z katalogu nr</label>
+              <input class="form-control" name="catalog_pattern_no" placeholder="np. 12">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3) Schody – materiał / wykończenie / opcje -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="mb-3">Schody – materiał, wykończenie, opcje</h5>
+
+        <div class="row g-3">
+          <div class="col-lg-4">
+            <div class="fw-semibold mb-2">Materiał</div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="wood" value="dab" checked>
+              <label class="form-check-label">Dąb</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="wood" value="dab_sekaty">
+              <label class="form-check-label">Dąb sękaty</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="wood" value="jesion">
+              <label class="form-check-label">Jesion</label>
+            </div>
+            <div class="mt-2">
+              <label class="form-label">Inny (opis)</label>
+              <input class="form-control" name="wood_other" placeholder="np. buk...">
+            </div>
+
+            <hr class="my-3">
+
+            <div class="fw-semibold mb-2">Bejcowanie</div>
+            <div class="small text-muted">barwienie na wybrany kolor z zachowaniem rysunku słojów</div>
+            <div class="mt-2">
+              <label class="form-label">Bejca nr / kolor</label>
+              <input class="form-control" name="stain_no">
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="fw-semibold mb-2">Wykończenie</div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="finish" value="lakier_polmat"><label class="form-check-label">Lakier półmat</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="finish" value="lakier_mat"><label class="form-check-label">Lakier mat</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="finish" value="szczotkowanie"><label class="form-check-label">Szczotkowanie</label></div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="finish" value="olejowanie"><label class="form-check-label">Olejowanie</label></div>
+            <div class="mt-2">
+              <label class="form-label">Inne (opis)</label>
+              <input class="form-control" name="finish_other">
+            </div>            
+          </div>
+
+          <div class="col-lg-4">
+            <div class="fw-semibold mb-2">Opcje</div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="led_milling" value="yes" id="led">
+              <label class="form-check-label" for="led">Frezowanie na LED</label>
+            </div>
+
+            <div class="mt-3">
+              <label class="form-label">Podstopnie (materiał)</label>
+              <input class="form-control" name="risers_material">
+            </div>
+            <div class="mt-2">
+              <label class="form-label">Podstopnie (kolor)</label>
+              <input class="form-control" name="risers_color">
+            </div>
+
+            <hr class="my-3">
+
+            <div class="fw-semibold mb-2">Docinanie schodów</div>
+            <select class="form-select" name="cutting">
+              <option value="">—</option>
+              <option value="klatka">przy klatce schodowej</option>
+              <option value="garaz">w garażu</option>
+              <option value="inna">inna opcja (dopłata 15%)</option>
+            </select>
+
+            <hr class="my-3">
+
+            <div class="fw-semibold mb-2">Pochwyt na ścianie</div>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="wall_handrail_side" value="lewy" id="wh_l">
+                <label class="form-check-label" for="wh_l">lewy</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="wall_handrail_side" value="prawy" id="wh_p">
+                <label class="form-check-label" for="wh_p">prawy</label>
+              </div>
+            </div>
+            <div class="mt-2">
+              <label class="form-label">Dystans (metalowy/drewniany) + kolor</label>
+              <input class="form-control" name="wall_handrail_spacer" placeholder="np. metalowy RAL 9005">
+            </div>
+
+            <div class="mt-3">
+              <label class="form-label">Uwagi</label>
+              <textarea class="form-control" name="notes" rows="3"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4) Balustrada -->
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <h5 class="mb-3">Balustrada / poręcze</h5>
+
+    <!-- WYBÓR TYPU BALUSTRADY -->
+    <div class="row g-3 align-items-end">
+      <div class="col-lg-6">
+        <label class="form-label fw-semibold">Typ balustrady</label>
+        <select class="form-select" name="balustrade_type" id="balustradeType">
+          <option value="">— wybierz —</option>
+          <option value="wood">BALUSTRADA DREWNIANA</option>
+          <option value="glass">BALUSTRADA SZKLANA</option>
+          <option value="laser">BALUSTRADA LASEROWA</option>
+          <option value="inox">STAL NIERDZEWNA</option>
+        </select>
+      </div>
+        <div class="col-md-6">
+              <label class="form-label fw-semibold">Frezowanie na LED (balustrada)</label>
+              <div class="d-flex gap-3 mt-1">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="bal_led" value="tak" id="bal_led_t">
+                  <label class="form-check-label" for="bal_led_t">tak</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="bal_led" value="nie" id="bal_led_n" checked>
+                  <label class="form-check-label" for="bal_led_n">nie</label>
+                </div>
+              </div>
+        </div>
+      
+    </div>
+
+    <hr class="my-3">
+
+    <!-- BLOKI OPCJI (ukrywane/pokazywane JS) -->
+    <div class="row g-3">
+
+      <!-- BALUSTRADA DREWNIANA -->
+      <div class="col-12" id="balWood" style="display:none;">
+        <div class="border rounded-3 p-3">
+          <div class="fw-semibold mb-2">BALUSTRADA DREWNIANA – opcje</div>
+          <div class="row g-2">
+            <div class="col-md-3">
+              <label class="form-label">Tralka nr</label>
+              <input class="form-control" name="wood_baluster_no">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Słupek nr</label>
+              <input class="form-control" name="wood_post_no">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Wykończenie/kolor</label>
+              <input class="form-control" name="wood_balustrade_color">
+            </div>
+            <div class="col-lg-6">
+        <label class="form-label fw-semibold">Poręcze</label>
+        <div class="d-flex flex-wrap gap-3">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="handrail" value="R6_8x4" id="hr1">
+            <label class="form-check-label" for="hr1">R6 8×4</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="handrail" value="4_5x6" id="hr2">
+            <label class="form-check-label" for="hr2">4,5×6</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="handrail" value="omega_6x5_7" id="hr3">
+            <label class="form-check-label" for="hr3">Ω 6×5,7</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="handrail" value="none" id="hr4" checked>
+            <label class="form-check-label" for="hr4">bez poręczy</label>
+          </div>
+        </div>
+      </div>
+            <div class="col-md-3">
+              <label class="form-label">Uwagi</label>
+              <textarea class="form-control" name="wood_balustrade_notes" rows="3"></textarea>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BALUSTRADA SZKLANA -->
+      <div class="col-12" id="balGlass" style="display:none;">
+        <div class="border rounded-3 p-3">
+          <div class="fw-semibold mb-2">BALUSTRADA SZKLANA – opcje</div>
+          <div class="row g-2">
+            <div class="col-md-4">
+              <label class="form-label">Szkło (FLOAT/OPTI/inne)</label>
+              <input class="form-control" name="glass_type" placeholder="FLOAT / OPTI / inne">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Grubość (np. 2×6, 2×8)</label>
+              <input class="form-control" name="glass_thickness">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Montaż szkła przy schodach</label>
+              <select class="form-select" name="glass_mount">
+                <option value="">—</option>
+                <option value="wpuszczane">wpuszczane</option>
+                <option value="bok">montowane do boku</option>
+                <option value="inne">inne</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Typ i kolor uchwytu / łącznik</label>
+              <input class="form-control" name="glass_connector" placeholder="typ + kolor">
+              <textarea class="form-control" name="glass_balustrade_notes" rows="3"></textarea>
+            </div>
+
+            
+          </div>
+        </div>
+      </div>
+
+      <!-- BALUSTRADA LASEROWA -->
+      <div class="col-12" id="balLaser" style="display:none;">
+        <div class="border rounded-3 p-3">
+          <div class="fw-semibold mb-2">BALUSTRADA LASEROWA – opcje</div>
+          <div class="row g-2">
+            <div class="col-md-3">
+              <label class="form-label">Wzór nr</label>
+              <input class="form-control" name="laser_pattern_no">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Kolor</label>
+              <input class="form-control" name="laser_color">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Materiał / grubość</label>
+              <input class="form-control" name="laser_material">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Uwagi</label>
+              <input class="form-control" name="laser_notes">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAL NIERDZEWNA -->
+      <div class="col-12" id="balInox" style="display:none;">
+        <div class="border rounded-3 p-3">
+          <div class="fw-semibold mb-2">STAL NIERDZEWNA – opcje</div>
+          <div class="row g-2">
+            <div class="col-md-3">
+              <label class="form-label">Wzór nr</label>
+              <input class="form-control" name="inox_pattern_no">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Kolor</label>
+              <input class="form-control" name="inox_color">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Wykończenie</label>
+              <input class="form-control" name="inox_finish" placeholder="np. satyna/poler">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Uwagi</label>
+              <input class="form-control" name="inox_notes">
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // --- Balustrada: pokaż/ukryj bloki wg typu ---
+  function syncBalustrade() {
+    const t = document.getElementById("balustradeType").value;
+
+    const wood = document.getElementById("balWood");
+    const glass = document.getElementById("balGlass");
+    const laser = document.getElementById("balLaser");
+    const inox = document.getElementById("balInox");
+
+    wood.style.display = (t === "wood") ? "block" : "none";
+    glass.style.display = (t === "glass") ? "block" : "none";
+    laser.style.display = (t === "laser") ? "block" : "none";
+    inox.style.display = (t === "inox") ? "block" : "none";
+
+    // Opcjonalnie: czyści pola ukrytych sekcji (żeby nie wysyłać śmieci)
+    // -> zostawiam wyłączone, ale jak chcesz to włączę.
+  }
+
+  document.getElementById("balustradeType").addEventListener("change", syncBalustrade);
+  syncBalustrade();
+</script>
+
+
+    <!-- 5) Komponenty z cennika (xlsx -> DB) -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="mb-3">Komponenty z cennika</h5>
+
+        <div class="row g-2 align-items-end">
+          <div class="col-lg-7">
+            <label class="form-label">Wyszukaj pozycję</label>
+            <input class="form-control" id="catalogSearch" placeholder="np. Balustrada szklana, Pochwyt, Stopień...">
+          </div>
+          <div class="col-lg-5">
+            <label class="form-label">Dodaj z listy</label>
+            <select class="form-select" id="catalogSelect">
+              <option value="">Ładowanie…</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-responsive mt-3">
+          <table class="table table-sm table-striped align-middle" id="itemsTable">
+            <thead>
+              <tr>
+                <th>Pozycja</th>
+                <th class="text-end">Cena jedn.</th>
+                <th class="text-end">Ilość</th>
+                <th class="text-end">Wartość</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr>
+                <th colspan="3" class="text-end">Suma</th>
+                <th class="text-end mono" id="grandTotal">0.00</th>
+                <th></th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Hidden JSON (pozycje wyceny) -->
+        <input type="hidden" name="items_json" id="itemsJson">
+        <div class="small text-muted">
+          Pozycje z ceną „do wyceny/reguła” mogą mieć „—” w podglądzie – backend może policzyć je osobno.
+        </div>
+      </div>
+    </div>
+
+    <!-- 6) Harmonogram płatności -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="mb-3">Harmonogram płatności</h5>
+
+        <div class="row g-2">
+          <div class="col-md-3">
+            <label class="form-label">Cena brutto – schody</label>
+            <input class="form-control" name="gross_stairs">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Cena brutto – balustrada</label>
+            <input class="form-control" name="gross_balustrade">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Zaliczka 1 (kwota)</label>
+            <input class="form-control" name="pay1_amount">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Zaliczka 1 (data)</label>
+            <input class="form-control" type="date" name="pay1_date">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Schody zamontowane (kwota)</label>
+            <input class="form-control" name="pay2_amount">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Schody zamontowane (data)</label>
+            <input class="form-control" type="date" name="pay2_date">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Balustrada (kwota)</label>
+            <input class="form-control" name="pay3_amount">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Balustrada (data)</label>
+            <input class="form-control" type="date" name="pay3_date">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+      <button class="btn btn-outline-secondary" type="reset">Wyczyść</button>
+      <button class="btn btn-primary" type="submit">Zapisz wycenę</button>
+    </div>
+  </form>
+
+</div>
+
+<script>
+  // --- Schody: sync podtypów wg rodzaju ---
+  function syncStairsSubtype() {
+    const kind = document.getElementById("stairsKind").value;
+    const grz = document.getElementById("grzType");
+    const pol = document.getElementById("polType");
+    const met = document.getElementById("metalType");
+
+    // reset + disable
+    grz.disabled = true; pol.disabled = true; met.disabled = true;
+    grz.value = ""; pol.value = ""; met.value = "";
+
+    if (kind === "grzebieniowe") grz.disabled = false;
+    if (kind === "policzkowe") pol.disabled = false;
+    if (kind === "konstr_metalowa") met.disabled = false;
+  }
+  document.getElementById("stairsKind").addEventListener("change", syncStairsSubtype);
+  syncStairsSubtype();
+
+  // --- Cennik / koszyk wyceny ---
+  let catalogItems = [];
+  let quoteItems = []; // {catalog_item_id, title, unit, unit_price, price_kind, qty}
+
+  const money = (v) => (Math.round((v + Number.EPSILON) * 100) / 100).toFixed(2);
+
+  function rebuildItemsTable() {
+    const tbody = document.querySelector("#itemsTable tbody");
+    tbody.innerHTML = "";
+
+    let total = 0;
+    quoteItems.forEach((it, idx) => {
+      const canCalc = it.price_kind === "fixed" && typeof it.unit_price === "number";
+      const lineTotal = canCalc ? (it.unit_price * it.qty) : null;
+      if (lineTotal !== null) total += lineTotal;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>
+          <div class="fw-semibold">${it.title}</div>
+          <div class="small text-muted">${it.unit ?? ""} ${it.price_kind !== "fixed" ? "• do wyceny/reguła" : ""}</div>
+        </td>
+        <td class="text-end mono">${canCalc ? money(it.unit_price) : "—"}</td>
+        <td class="text-end" style="max-width:140px">
+          <input type="number" min="0" step="0.01" class="form-control form-control-sm text-end"
+                 value="${it.qty}" data-idx="${idx}">
+        </td>
+        <td class="text-end mono">${lineTotal !== null ? money(lineTotal) : "—"}</td>
+        <td class="text-end">
+          <button class="btn btn-sm btn-outline-danger" type="button" data-rm="${idx}">Usuń</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById("grandTotal").textContent = money(total);
+    document.getElementById("itemsJson").value = JSON.stringify(quoteItems);
+  }
+
+  function addSelectedItem(id) {
+    const item = catalogItems.find(x => String(x.id) === String(id));
+    if (!item) return;
+
+    const existing = quoteItems.find(q => String(q.catalog_item_id) === String(item.id));
+    if (existing) {
+      existing.qty += 1;
+    } else {
+      quoteItems.push({
+        catalog_item_id: item.id,
+        title: item.path_title,
+        unit: item.unit,
+        unit_price: item.price_value,
+        price_kind: item.price_kind,
+        qty: 1
+      });
+    }
+    rebuildItemsTable();
+  }
+
+  document.addEventListener("input", (e) => {
+    if (e.target && e.target.matches('input[data-idx]')) {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      quoteItems[idx].qty = parseFloat(e.target.value || "0");
+      rebuildItemsTable();
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    if (e.target && e.target.matches('button[data-rm]')) {
+      const idx = parseInt(e.target.dataset.rm, 10);
+      quoteItems.splice(idx, 1);
+      rebuildItemsTable();
+    }
+  });
+
+  async function loadCatalog() {
+    const res = await fetch("{{ url_for('catalog.api_items') }}");
+    const data = await res.json();
+    catalogItems = data.items || [];
+
+    const sel = document.getElementById("catalogSelect");
+    sel.innerHTML = `<option value="">— wybierz pozycję —</option>`;
+    for (const it of catalogItems) {
+      const opt = document.createElement("option");
+      opt.value = it.id;
+      opt.textContent = it.path_title;
+      sel.appendChild(opt);
+    }
+  }
+
+  document.getElementById("catalogSearch").addEventListener("input", (e) => {
+    const q = (e.target.value || "").toLowerCase().trim();
+    const sel = document.getElementById("catalogSelect");
+    sel.innerHTML = `<option value="">— wybierz pozycję —</option>`;
+    for (const it of catalogItems) {
+      if (!q || it.path_title.toLowerCase().includes(q)) {
+        const opt = document.createElement("option");
+        opt.value = it.id;
+        opt.textContent = it.path_title;
+        sel.appendChild(opt);
+      }
+    }
+  });
+
+  document.getElementById("catalogSelect").addEventListener("change", (e) => {
+    if (e.target.value) addSelectedItem(e.target.value);
+    e.target.value = "";
+  });
+
+  // gwarancja, że hidden JSON jest aktualny przed submit
+  document.getElementById("quoteForm").addEventListener("submit", () => {
+    document.getElementById("itemsJson").value = JSON.stringify(quoteItems);
+  });
+
+  loadCatalog();
+</script>
+</body>
+</html>

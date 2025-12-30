@@ -193,10 +193,11 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
-baza.db
-alembic
-alembic.ini
-static/zdjecia
-static/pdf
-db_manipulation.ipynb
+old_app/baza.db
+old_app/alembic
+old_app/alembic.ini
+old_app/static/zdjecia
+old_app/static/pdf
+old_app/db_manipulation.ipynb
+Dane do wycen.xlsx
 .vscode
