@@ -137,6 +137,31 @@
             </div>
           </div>
         </div>
+        <hr class="my-3">
+
+<!-- Wybór pozycji z cennika z grópy schody -->
+
+        <div class="row g-2 align-items-end">
+          <div class="col-lg-7">
+            <label class="form-label fw-semibold">Pozycje z cennika (Schody)</label>
+            <input class="form-control" id="stairsCatalogSearch" placeholder="Szukaj w pozycjach schodów…">
+          </div>
+          <div class="col-lg-5">
+            <label class="form-label fw-semibold">Dodaj pozycję</label>
+            <div class="d-flex gap-2">
+              <select class="form-select" id="stairsCatalogSelect">
+                <option value="">Ładowanie…</option>
+              </select>
+              <button class="btn btn-outline-primary" type="button" id="stairsAddBtn">Dodaj</button>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="small text-muted">
+              Lista jest filtrowana do kategorii <b>SCHODY</b> oraz (opcjonalnie) do rodzaju schodów.
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -538,6 +563,44 @@
 </div>
 
 <script>
+
+  // --- helper: normalizacja tekstu do porównań ---
+  function norm(s) {
+    return (s || "").toString().trim().toLowerCase();
+  }
+
+  function isStairsCategory(item) {
+    // Grupa I = "Schody" (różne warianty wielkości liter)
+    return norm(item.category_name).includes("schod");
+  }
+
+  // mapowanie rodzaju schodów -> słowa kluczowe dla group_name (Grupa II)
+  // Dostosuj nazwy do tego jak masz w XLSX w kolumnie "Grupa II"
+  const stairsGroupKeywords = {
+    "grzebieniowe": ["grzebieniowe", "grzebień"],
+    "policzkowe": ["policzkowe"],
+    "konstr_metalowa": ["metal", "konstrukcja metal", "stal"],
+    "dywanowe": ["dywanowe"],
+    "wspornikowe": ["wspornikowe"]
+  };
+
+  function matchesStairsKind(item) {
+    const kind = document.getElementById("stairsKind")?.value || "";
+    if (!kind) return true;
+
+    const g = norm(item.group_name);
+    const keys = stairsGroupKeywords[kind] || [];
+
+    // jeżeli nie masz ustandaryzowanych nazw grup w XLSX -> zwróć true i filtruj tylko po kategorii
+    if (keys.length === 0) return true;
+
+    return keys.some(k => g.includes(norm(k)));
+  }
+
+  function stairsFilter(item) {
+    return isStairsCategory(item) && matchesStairsKind(item);
+  }
+
   // --- Schody: sync podtypów wg rodzaju ---
   function syncStairsSubtype() {
     const kind = document.getElementById("stairsKind").value;
@@ -671,6 +734,63 @@
   });
 
   loadCatalog();
+function rebuildStairsSelect() {
+    const sel = document.getElementById("stairsCatalogSelect");
+    const q = norm(document.getElementById("stairsCatalogSearch").value);
+
+    const filtered = catalogItems
+      .filter(stairsFilter)
+      .filter(it => !q || norm(it.path_title).includes(q));
+
+    sel.innerHTML = `<option value="">— wybierz pozycję —</option>`;
+    for (const it of filtered) {
+      const opt = document.createElement("option");
+      opt.value = it.id;
+      opt.textContent = it.path_title;
+      sel.appendChild(opt);
+    }
+  }
+
+  function addStairsSelected() {
+    const sel = document.getElementById("stairsCatalogSelect");
+    if (!sel.value) return;
+    addSelectedItem(sel.value);   // używa Twojej istniejącej funkcji dodawania do quoteItems
+    sel.value = "";
+  }
+
+   // Po załadowaniu katalogu
+  async function loadCatalog() {
+    const res = await fetch("{{ url_for('catalog.api_items') }}");
+    const data = await res.json();
+    catalogItems = data.items || [];
+
+    // istniejący select globalny:
+    const sel = document.getElementById("catalogSelect");
+    sel.innerHTML = `<option value="">— wybierz pozycję —</option>`;
+    for (const it of catalogItems) {
+      const opt = document.createElement("option");
+      opt.value = it.id;
+      opt.textContent = it.path_title;
+      sel.appendChild(opt);
+    }
+
+    // NOWE: schody select
+    rebuildStairsSelect();
+  }
+
+  // Rebuild schody listy kiedy:
+  document.getElementById("stairsCatalogSearch")?.addEventListener("input", rebuildStairsSelect);
+  document.getElementById("stairsAddBtn")?.addEventListener("click", addStairsSelected);
+
+  // Rebuild po zmianie rodzaju/podtypu schodów
+  document.getElementById("stairsKind")?.addEventListener("change", () => {
+    syncStairsSubtype();     // Twoja funkcja
+    rebuildStairsSelect();   // odśwież listę schodów
+  });
+  document.getElementById("grzType")?.addEventListener("change", rebuildStairsSelect);
+  document.getElementById("polType")?.addEventListener("change", rebuildStairsSelect);
+  document.getElementById("metalType")?.addEventListener("change", rebuildStairsSelect);
+
 </script>
 </body>
 </html>
